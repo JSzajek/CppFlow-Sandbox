@@ -9,7 +9,7 @@
 
 int main()
 {
-	const std::string model_name = "simple_add";
+	const std::string model_name = "linear";
 
 	// Create Model Description -------------------------------------------------------------------
 	TF::ModelLayout layout;
@@ -17,22 +17,23 @@ int main()
 
 	layout.inputs = 
 	{
-		{ "x", "float32", { -1 } },
-		{ "y", "float32", { -1 } }
+		{ "x", "float32", { -1, 1 } },
 	};
 
 	layout.outputs = 
 	{
-		{ "add_result" }
+		{ "y" }
 	};
 
 	layout.layers = 
 	{
-		{ "Add", 
+		{ "Dense", 
 			{
-				{"input_names", {"x", "y"}}, 
+				{ "input_name", "x" },
 
-				{"output_name", "add_result"}
+				{ "units", 1 }, 
+
+				{ "output_name", "y" },
 			} 
 		}
 	};
@@ -68,17 +69,12 @@ int main()
 	std::vector<std::tuple<std::string, cppflow::tensor>> inputs_vec;
 
 	// Example inputs
-	cppflow::tensor input_x = cppflow::tensor({ 1.0f, 2.0f, 3.0f });
-	cppflow::tensor input_y = cppflow::tensor({ 4.0f, 5.0f, 6.0f });
+	cppflow::tensor input_x = cppflow::tensor(std::vector<float>{ 1.0f, 2.0f, 3.0f }, { 3, 1 });
 
 	// Match names from JSON to create input tuples
 	if (io_names["inputs"].contains("x")) 
 	{
 		inputs_vec.emplace_back(io_names["inputs"]["x"].get<std::string>(), input_x);
-	}
-	if (io_names["inputs"].contains("y")) 
-	{
-		inputs_vec.emplace_back(io_names["inputs"]["y"].get<std::string>(), input_y);
 	}
 
 	// Prepare outputs vector<string>
@@ -98,7 +94,6 @@ int main()
 
 	// Output the results -------------------------------------------------------------------------
 	std::cout << "Input X:\n" << TF::PrintTensor<float>(input_x) << std::endl;
-	std::cout << "Input Y:\n" << TF::PrintTensor<float>(input_y) << std::endl;
 	
 	if (!results.empty()) 
 	{

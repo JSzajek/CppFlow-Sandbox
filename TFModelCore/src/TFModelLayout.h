@@ -22,7 +22,7 @@ namespace TF
 		std::vector<int> shape;
 	};
 
-	struct Outputs
+	struct Output
 	{
 	public:
 		// Desired output node name
@@ -48,7 +48,7 @@ namespace TF
 		std::vector<TF::Input> inputs;
 
 		// Output nodes, e.g., {"add_result"}
-		std::vector<TF::Outputs> outputs;
+		std::vector<TF::Output> outputs;
 
 		// Layers in the model, e.g., {"Dense", {{"units", 64}, {"activation", "relu"}}}
 		std::vector<TF::Layer> layers;

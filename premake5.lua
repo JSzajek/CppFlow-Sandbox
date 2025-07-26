@@ -42,6 +42,7 @@ outputdir = "%{cfg.system}-%{cfg.buildcfg}-%{cfg.architecture}"
 group ""
 	include "TFModelCore"
 	include "SimpleAddModel"
+	include "LinearRegressionModel"
 group ""
 
 

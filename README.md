@@ -7,7 +7,8 @@ A simple project for testing the various aspects of CppFlow and automatic Tensor
 Ensure you have the following installed on your system:
 - **C++20** or later
 - A modern **C++ compiler** (e.g., GCC, Clang, MSVC)
-- Python w/ **TensorFlow** installed
+- Python w/ **TensorFlow (2.10.0)** installed
+   - Build with Python Version: Python 3.10.11
 
 ### **How to Build**
 #### **Step 1: Clone the Repository**
