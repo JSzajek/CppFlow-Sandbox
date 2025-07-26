@@ -4,31 +4,15 @@
 
 #include <cppflow/cppflow.h>
 
-#include "TFModel.h"
-
-template<typename T>
-std::string PrintTensor(const cppflow::tensor& tensor)
-{
-	std::stringstream stream;
-	stream << "[";
-	std::vector<T> data = tensor.get_data<T>();
-	for (uint32_t j = 0; j < data.size(); ++j)
-	{
-		stream << data[j];
-		if (j < data.size() - 1)
-			stream << ", ";
-	}
-	stream << "]";
-	return stream.str();
-}
-
+#include "TFUtilities.h"
+#include "TFModelLayout.h"
 
 int main()
 {
 	const std::string model_name = "simple_add";
 
 	// Create Simple Model Description ------------------------------------------------------------
-	TFModelLayout layout;
+	TF::ModelLayout layout;
 	layout.model_name = model_name;
 
 	layout.inputs = 
@@ -53,8 +37,7 @@ int main()
 		}
 	};
 
-	nlohmann::json j = layout.to_json();
-	std::ofstream("model_description.json") << j.dump(2);
+	layout.WriteToFile("model_description.json");
 	// --------------------------------------------------------------------------------------------
 
 	// Create the Model In Python -----------------------------------------------------------------
@@ -114,15 +97,15 @@ int main()
 
 
 	// Output the results -------------------------------------------------------------------------
-	std::cout << "Input X:\n" << PrintTensor<float>(input_x) << std::endl;
-	std::cout << "Input Y:\n" << PrintTensor<float>(input_y) << std::endl;
+	std::cout << "Input X:\n" << TF::PrintTensor<float>(input_x) << std::endl;
+	std::cout << "Input Y:\n" << TF::PrintTensor<float>(input_y) << std::endl;
 	
 	if (!results.empty()) 
 	{
 		for (uint32_t i = 0; i < results.size(); ++i)
 		{
 			std::cout << "Result {" << i << "}:" << std::endl;
-			std::cout << "\t" << PrintTensor<float>(results[i]) << std::endl;
+			std::cout << "\t" << TF::PrintTensor<float>(results[i]) << std::endl;
 		}
 	}
 	// --------------------------------------------------------------------------------------------

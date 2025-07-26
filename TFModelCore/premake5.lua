@@ -1,7 +1,7 @@
 include "dependencies.lua"
 
-project "SimpleAddModel"
-	kind "ConsoleApp"
+project "TFModelCore"
+	kind "StaticLib"
 
 	language "C++"
 	cppdialect "C++20"
@@ -14,17 +14,16 @@ project "SimpleAddModel"
 	files
 	{
 		"src/**.h",
-		"src/**.cpp",
+		"src/**.cpp"
 	}
 
 	includedirs
 	{
 		"src",
 	}
-
+	
 	LinkCppFlow()
 	LinkJson()
-	LinkTFModel()
 	
 	filter "system:windows"
 		systemversion "latest"
