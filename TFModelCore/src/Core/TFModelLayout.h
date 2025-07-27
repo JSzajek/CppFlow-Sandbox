@@ -22,7 +22,7 @@ namespace TF
 		std::vector<int> shape;
 
 		// "data" or "image"
-		std::string input_type = "data"; 
+		std::string domain = "data"; 
 	};
 
 	struct Output
@@ -45,7 +45,7 @@ namespace TF
 	struct ModelLayout
 	{
 	public:
-		void WriteToFile(const std::filesystem::path& filepath);
+		void WriteToFile(const std::filesystem::path& filepath) const;
 	private:
 		nlohmann::json to_json() const;
 

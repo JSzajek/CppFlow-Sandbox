@@ -5,7 +5,7 @@
 
 namespace TF
 {
-	void ModelLayout::WriteToFile(const std::filesystem::path& filepath)
+	void ModelLayout::WriteToFile(const std::filesystem::path& filepath) const
 	{
 		std::filesystem::path parent_path = filepath.parent_path();
 		if (!std::filesystem::is_directory(parent_path) || !std::filesystem::exists(parent_path))
@@ -33,7 +33,7 @@ namespace TF
 				{ "name", input.name },
 				{ "dtype", input.dtype },
 				{ "shape", input.shape },
-				{ "input_type", input.input_type }
+				{ "domain", input.domain }
 			});
 		}
 

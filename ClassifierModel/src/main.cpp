@@ -8,83 +8,45 @@
 
 int main()
 {
-	const std::string model_name = "simple_mnist";
-	const std::string model_description_path = model_name + "/model_description.json";
+	TF::MLModel model("simple_mnist");
 
-	// Create Model Description -------------------------------------------------------------------
-	TF::ModelLayout layout;
-	layout.model_name = model_name;
+	model.AddInput("input", "float32", { -1, 28, 28, 1 }, "image");
 
-	layout.inputs = 
+	model.AddOutput("class_probs");
+
+	model.AddLayer("Flatten",
 	{
-		{ "input", "float32", { -1, 28, 28, 1 }, "image" },
-	};
+		{ "input_name", "input" },
+		{ "output_name", "flat_input" }
+	});
 
-	layout.outputs = 
+	model.AddLayer("Dense",
 	{
-		{ "class_probs" }
-	};
+		{ "input_name", "flat_input" },
+		{ "units", 64 },
+		{ "activation", "relu" },
+		{ "output_name", "dense_output1" },
+	});
 
-	layout.layers = 
+	model.AddLayer("Dense",
 	{
-		{ "Flatten",
-			{
-				{ "input_name", "input" },
-				{ "output_name", "flat_input" }
-			}
-		},
-		{ "Dense",
-			{
-				{ "input_name", "flat_input" },
-				{ "units", 64 },
-				{ "activation", "relu" },
-				{ "output_name", "dense_output1" },
-			}
-		},
-		{ "Dense",
-			{
-				{ "input_name", "dense_output1" },
-				{ "units", 3 },
-				{ "activation", "softmax" },
-				{ "output_name", "class_probs" },
-			}
-		}
-	};
+		{ "input_name", "dense_output1" },
+		{ "units", 3 },
+		{ "activation", "softmax" },
+		{ "output_name", "class_probs" },
+	});
 
-	layout.WriteToFile(model_description_path);
-	// --------------------------------------------------------------------------------------------
-
-	// Create the Model In Python -----------------------------------------------------------------
-	const std::string python_script = "python ../PythonScripts/build_model_from_json.py \"" + model_description_path + "\"";
-
-	int32_t exit_code = std::system(python_script.c_str());
-	if (exit_code != 0)
+	if (!model.CreateModel())
 	{
-		std::cerr << "Failed to execute Python script. Exit code: " << exit_code << std::endl;
-		return -1;
-	}
-	// --------------------------------------------------------------------------------------------
-
-	// Load and Run The Model In C++ --------------------------------------------------------------
-
-	// Load JSON with input/output tensor names
-	std::ifstream in(model_name + "/cppflow_io_names.json");
-	if (!in.is_open()) 
-	{
-		std::cerr << "Failed to open cppflow_io_names.json" << std::endl;
+		std::cerr << "Failed to create model." << std::endl;
 		return -1;
 	}
 
-	nlohmann::json io_names;
-	in >> io_names;
 
-	// Prepare inputs vector<std::tuple<string, tensor>>
-	std::vector<std::tuple<std::string, cppflow::tensor>> inputs_vec;
+	// Example Input Image
+	cv::Mat image = cv::imread("digit.png", cv::IMREAD_GRAYSCALE);
 
-	// Load and pre-process the image
-	cv::Mat image = cv::imread("digit.png", cv::IMREAD_GRAYSCALE);  // Load grayscale
-
-	if (image.empty()) 
+	if (image.empty())
 	{
 		std::cerr << "Failed to load image\n";
 		return -1;
@@ -102,38 +64,27 @@ int main()
 	// Create input tensor 
 	cppflow::tensor input_tensor(input_data, { 1, 28, 28, 1 });
 
+	std::unordered_map<std::string, cppflow::tensor> inputs;
+	inputs["input"] = input_tensor;
 
-	// Match names from JSON to create input tuples
-	if (io_names["inputs"].contains("input")) 
+	TF::MLModel::Result results;
+	if (model.Run(inputs, results))
 	{
-		inputs_vec.emplace_back(io_names["inputs"]["input"].get<std::string>(), input_tensor);
-	}
-
-	// Prepare outputs vector<string>
-	std::vector<std::string> outputs_vec;
-	for (auto& [key, val] : io_names["outputs"].items()) 
-	{
-		outputs_vec.push_back(val.get<std::string>());
-	}
-
-	// Load model
-	cppflow::model model(model_name);
-
-	// Run model
-	std::vector<cppflow::tensor> results = model(inputs_vec, outputs_vec);
-	// --------------------------------------------------------------------------------------------
-
-
-	// Output the results -------------------------------------------------------------------------
-	if (!results.empty()) 
-	{
-		for (uint32_t i = 0; i < results.size(); ++i)
+		// Output the results -------------------------------------------------------------------------
+		if (!results.empty())
 		{
-			std::cout << "Result {" << i << "}:" << std::endl;
-			std::cout << "\t" << TF::PrintTensor<float>(results[i]) << std::endl;
+			for (const auto& [key, value] : results)
+			{
+				std::cout << "Result {" << key << "}:" << std::endl;
+				std::cout << "\t" << TF::PrintTensor<float>(value) << std::endl;
+			}
 		}
+		// --------------------------------------------------------------------------------------------
 	}
-	// --------------------------------------------------------------------------------------------
-
+	else
+	{
+		std::cerr << "Failed to Run Model." << std::endl;
+		return -1;
+	}
 	return 0;
 }

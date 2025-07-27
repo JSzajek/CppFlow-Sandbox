@@ -18,7 +18,7 @@ namespace TF
 		labels = std::move(batch.labels);
 	}
 
-	void TrainingBatch::WriteToFile(const std::filesystem::path& filepath)
+	void TrainingBatch::WriteToFile(const std::filesystem::path& filepath) const
 	{
 		std::filesystem::path parent_path = filepath.parent_path();
 		if (!std::filesystem::is_directory(parent_path) || !std::filesystem::exists(parent_path))
@@ -35,10 +35,10 @@ namespace TF
 	{
 		nlohmann::json result;
 		for (const auto& input : inputs)
-			result["inputs"][input.name] = input.data;
+			result["inputs"][input.name].push_back(input.data);
 
 		for (const auto& label : labels)
-			result["labels"][label.name] = label.data;
+			result["labels"][label.name].push_back(label.data);
 
 		return result;
 	}

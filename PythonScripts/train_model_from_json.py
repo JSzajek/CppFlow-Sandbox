@@ -1,3 +1,4 @@
+import os
 import json
 import sys
 import tensorflow as tf
@@ -17,13 +18,15 @@ def load_json(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
 
-def main(model_path, desc_path, data_path):
+def main(input_model, output_model, train_config_json, train_data_json):
     # Load files --------------------------------------------------------------
-    layout = load_json(desc_path)
-    train_data = load_json(data_path)
+    layout = load_json(input_model + "/model_description.json")
+    train_config = load_json(train_config_json)
+    train_data = load_json(train_data_json)
+
 
     # --- Load Keras model ----------------------------------------------------
-    model = tf.keras.models.load_model(model_path)
+    model = tf.keras.models.load_model(input_model)
     # -------------------------------------------------------------------------
 
 
@@ -33,7 +36,7 @@ def main(model_path, desc_path, data_path):
         name = input_spec["name"]
         dtype = tf_dtype_from_string(input_spec["dtype"])
         shape = input_spec["shape"]
-        intype = input_spec["input_type"]
+        domain = input_spec["domain"]
 
         tensor = tf.convert_to_tensor(train_data["inputs"][name], dtype=dtype)
 
@@ -58,22 +61,32 @@ def main(model_path, desc_path, data_path):
     # -------------------------------------------------------------------------
 
     # --- Fit model -----------------------------------------------------------
-    model.fit(x=input_data, y=label_data, epochs=10, batch_size=32)
+    eps = train_config["epochs"]
+    b_size = train_config["batch_size"]
+    learning_rate = train_config["learning_rate"]
+    shuffle = train_config["shuffle"]
+    val_split = train_config["validation_split"]
+
+    model.fit(x=input_data, y=label_data, epochs=eps, batch_size=b_size)
     # -------------------------------------------------------------------------
 
     # --- Save updated model --------------------------------------------------
-    model.save(model_path)
-    print(f"Model retrained and saved to {model_path}")
+    model.save(output_model)
+    print(f"Model Retrained and Saved to {output_model}")
     # -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Usage: python train_model.py <model_path> <output_path> <model_description.json> <train_data.json>")
-        sys.exit(1)
+        print("Usage: python train_model.py <input_model> <output_model> <train_config.json> <train_data.json>")
+        sys.exit(-1)
 
-    model_path = sys.argv[1]
-    output_model_path = sys.argv[2]
-    model_path = sys.argv[1]
-    desc_path = sys.argv[2]
-    data_path = sys.argv[3]
-    main(model_path, desc_path, data_path)
+    input_model = sys.argv[1]
+    output_model = sys.argv[2]
+    train_config_json = sys.argv[3]
+    train_data_json = sys.argv[4]
+
+    if (not os.path.exists(input_model + "/model_description.json")):
+        print("Missing Model Description Json File.")
+        sys.exit(-1)
+
+    main(input_model, output_model, train_config_json, train_data_json)
