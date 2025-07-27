@@ -22,7 +22,37 @@ def build_model(layout):
                 units=params["units"],
                 activation=params.get("activation", None)
             )(layers[params["input_name"]])
-        # Extend with more layer types...
+        elif typ == "Flatten":
+            layers[params["output_name"]] = tf.keras.layers.Flatten()(
+                layers[params["input_name"]]
+            )
+        elif typ == "Activation":
+            layers[params["output_name"]] = tf.keras.layers.Activation(
+                activation=params["activation"]
+            )(layers[params["input_name"]])
+        elif typ == "Dropout":
+            layers[params["output_name"]] = tf.keras.layers.Dropout(
+                rate=params["rate"]
+            )(layers[params["input_name"]])
+        elif typ == "Conv2D":
+            layers[params["output_name"]] = tf.keras.layers.Conv2D(
+                filters=params["filters"],
+                kernel_size=tuple(params["kernel_size"]),
+                strides=tuple(params.get("strides", [1, 1])),
+                padding=params.get("padding", "valid"),
+                activation=params.get("activation", None)
+            )(layers[params["input_name"]])
+        elif typ == "MaxPooling2D":
+            layers[params["output_name"]] = tf.keras.layers.MaxPooling2D(
+                pool_size=tuple(params.get("pool_size", [2, 2])),
+                strides=tuple(params.get("strides", [2, 2])),
+                padding=params.get("padding", "valid")
+            )(layers[params["input_name"]])
+        elif typ == "BatchNormalization":
+            layers[params["output_name"]] = tf.keras.layers.BatchNormalization()(
+                layers[params["input_name"]]
+            )
+        # TODO:: Extend with more layer types...
 
     outputs = [layers[o["name"]] for o in layout["outputs"]]
     model = tf.keras.Model(inputs=list(inputs.values()), outputs=outputs)
@@ -38,10 +68,10 @@ def extract_tensor_names(saved_model_dir, signature="serving_default"):
     }
 
     for k, v in sig_def.inputs.items():
-        io_info["inputs"][k] = v.name  # This is what CppFlow wants
+        io_info["inputs"][k] = v.name
 
     for k, v in sig_def.outputs.items():
-        io_info["outputs"][k] = v.name  # This is "PartitionedCall:0" etc.
+        io_info["outputs"][k] = v.name
 
     return io_info
 

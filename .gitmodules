@@ -4,3 +4,6 @@
 [submodule "vendor/cppflow_lib"]
 	path = vendor/cppflow_lib
 	url = https://github.com/JSzajek/CppFlow-Lib-fork.git
+[submodule "vendor/opencv_lib"]
+	path = vendor/opencv_lib
+	url = https://github.com/JSzajek/OpenCV-Lib-fork.git

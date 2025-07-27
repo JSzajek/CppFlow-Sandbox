@@ -20,6 +20,9 @@ namespace TF
 
 		// Shape of the input tensor, use -1 for dynamic dimensions
 		std::vector<int> shape;
+
+		// "data" or "image"
+		std::string input_type = "data"; 
 	};
 
 	struct Output
@@ -32,7 +35,7 @@ namespace TF
 	struct Layer
 	{
 	public:
-		// e.g., "Dense", "Conv2D", "ReLU"
+		// e.g., "Flatten", "Add", "Activation", Dense", "Dropout", "Conv2D", "MaxPooling2D", "BatchNormalization"
 		std::string type;
 
 		// Generic parameters

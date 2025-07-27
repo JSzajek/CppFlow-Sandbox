@@ -43,6 +43,7 @@ group ""
 	include "TFModelCore"
 	include "SimpleAddModel"
 	include "LinearRegressionModel"
+	include "ClassifierModel"
 group ""
 
 

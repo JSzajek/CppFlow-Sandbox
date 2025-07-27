@@ -23,7 +23,8 @@ namespace TF
 			{
 				{ "name", input.name },
 				{ "dtype", input.dtype },
-				{ "shape", input.shape }
+				{ "shape", input.shape },
+				{ "input_type", input.input_type }
 			});
 		}
 
@@ -53,13 +54,33 @@ namespace TF
 		layout.model_name = j.at("model_name");
 
 		for (const auto& jin : j.at("inputs"))
-			layout.inputs.push_back({ jin.at("name"), jin.at("dtype"), jin.at("shape").get<std::vector<int>>() });
+		{
+			layout.inputs.push_back(
+			{ 
+				jin.at("name"), 
+				jin.at("dtype"), 
+				jin.at("shape").get<std::vector<int>>(),
+				jin.value("input_type", "data") // Default to "data" if not specified
+			});
+
+		}
 
 		for (const auto& jout : j.at("outputs"))
-			layout.outputs.push_back({ jout.at("name") });
+		{
+			layout.outputs.push_back(
+			{ 
+				jout.at("name") 
+			});
+		}
 
 		for (const auto& jlayer : j.at("layers"))
-			layout.layers.push_back({ jlayer.at("type"), jlayer.at("params") });
+		{
+			layout.layers.push_back(
+			{ 
+				jlayer.at("type"), 
+				jlayer.at("params") 
+			});
+		}
 
 		return layout;
 	}

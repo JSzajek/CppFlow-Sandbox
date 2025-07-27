@@ -3,13 +3,14 @@
 #include <cstdlib>
 
 #include <cppflow/cppflow.h>
+#include <opencv2/opencv.hpp>
 
 #include "TFUtilities.h"
 #include "TFModelLayout.h"
 
 int main()
 {
-	const std::string model_name = "linear";
+	const std::string model_name = "simple_mnist";
 
 	// Create Model Description -------------------------------------------------------------------
 	TF::ModelLayout layout;
@@ -17,22 +18,37 @@ int main()
 
 	layout.inputs = 
 	{
-		{ "x", "float32", { -1, 1 } },
+		{ "input", "float32", { -1, 28, 28, 1 }, "image" },
 	};
 
 	layout.outputs = 
 	{
-		{ "y" }
+		{ "class_probs" }
 	};
 
 	layout.layers = 
 	{
-		{ "Dense", 
+		{ "Flatten",
 			{
-				{ "input_name", "x" },
-				{ "units", 1 }, 
-				{ "output_name", "y" },
-			} 
+				{ "input_name", "input" },
+				{ "output_name", "flat_input" }
+			}
+		},
+		{ "Dense",
+			{
+				{ "input_name", "flat_input" },
+				{ "units", 64 },
+				{ "activation", "relu" },
+				{ "output_name", "dense_output1" },
+			}
+		},
+		{ "Dense",
+			{
+				{ "input_name", "dense_output1" },
+				{ "units", 3 },
+				{ "activation", "softmax" },
+				{ "output_name", "class_probs" },
+			}
 		}
 	};
 
@@ -66,13 +82,32 @@ int main()
 	// Prepare inputs vector<std::tuple<string, tensor>>
 	std::vector<std::tuple<std::string, cppflow::tensor>> inputs_vec;
 
-	// Example inputs
-	cppflow::tensor input_x = cppflow::tensor(std::vector<float>{ 1.0f, 2.0f, 3.0f }, { 3, 1 });
+	// Load and pre-process the image
+	cv::Mat image = cv::imread("digit.png", cv::IMREAD_GRAYSCALE);  // Load grayscale
+
+	if (image.empty()) 
+	{
+		std::cerr << "Failed to load image\n";
+		return -1;
+	}
+
+	// Resize to 28x28
+	cv::resize(image, image, cv::Size(28, 28));
+
+	// Normalize to [0, 1]
+	image.convertTo(image, CV_32FC1, 1.0 / 255.0);
+
+	// Flatten to 1D vector
+	std::vector<float> input_data(image.begin<float>(), image.end<float>());
+
+	// Create input tensor 
+	cppflow::tensor input_tensor(input_data, { 1, 28, 28, 1 });
+
 
 	// Match names from JSON to create input tuples
-	if (io_names["inputs"].contains("x")) 
+	if (io_names["inputs"].contains("input")) 
 	{
-		inputs_vec.emplace_back(io_names["inputs"]["x"].get<std::string>(), input_x);
+		inputs_vec.emplace_back(io_names["inputs"]["input"].get<std::string>(), input_tensor);
 	}
 
 	// Prepare outputs vector<string>
@@ -91,8 +126,6 @@ int main()
 
 
 	// Output the results -------------------------------------------------------------------------
-	std::cout << "Input X:\n" << TF::PrintTensor<float>(input_x) << std::endl;
-	
 	if (!results.empty()) 
 	{
 		for (uint32_t i = 0; i < results.size(); ++i)

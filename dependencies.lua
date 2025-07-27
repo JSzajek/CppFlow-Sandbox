@@ -1,6 +1,7 @@
 include "vendor/cppflow_lib/init_tensorflowlib.lua"
 include "vendor/cppflow_lib/cppflowlink.lua"
 include "vendor/json_lib/jsonlink.lua"
+include "vendor/opencv_lib/opencv4link.lua"
 include "TFModelCore/tfmodellink.lua"
 
 IncludeDir = {}
