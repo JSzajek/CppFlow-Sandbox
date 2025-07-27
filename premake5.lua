@@ -44,6 +44,7 @@ group ""
 	include "SimpleAddModel"
 	include "LinearRegressionModel"
 	include "ClassifierModel"
+	include "TrainingLinearRegressionModel"
 group ""
 
 

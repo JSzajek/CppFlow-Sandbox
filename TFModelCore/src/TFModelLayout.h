@@ -44,6 +44,13 @@ namespace TF
 
 	struct ModelLayout
 	{
+	public:
+		void WriteToFile(const std::filesystem::path& filepath);
+	private:
+		nlohmann::json to_json() const;
+
+		static ModelLayout from_json(const nlohmann::json& j);
+	public:
 		// Model name, e.g., "simple_add", "image_classifier"
 		std::string model_name;
 
@@ -55,11 +62,5 @@ namespace TF
 
 		// Layers in the model, e.g., {"Dense", {{"units", 64}, {"activation", "relu"}}}
 		std::vector<TF::Layer> layers;
-	public:
-		void WriteToFile(const std::filesystem::path& filepath);
-	public:
-		nlohmann::json to_json() const;
-		
-		static ModelLayout from_json(const nlohmann::json& j);
 	};
 }

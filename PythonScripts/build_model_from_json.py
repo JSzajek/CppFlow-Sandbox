@@ -82,7 +82,8 @@ def main(json_path):
     model_name = layout["model_name"]
 
     model = build_model(layout)
-    tf.saved_model.save(model, model_name)
+    model.compile(optimizer='adam', loss='categorical_crossentropy')
+    model.save(model_name)
 
     # Extract Signatures
     io = extract_tensor_names(model_name)
