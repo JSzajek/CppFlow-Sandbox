@@ -2,14 +2,12 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <cppflow/cppflow.h>
-
-#include "TFUtilities.h"
-#include "TFModelLayout.h"
+#include "TFModelLib.h"
 
 int main()
 {
 	const std::string model_name = "linear";
+	const std::string model_description_path = model_name + "/model_description.json";
 
 	// Create Model Description -------------------------------------------------------------------
 	TF::ModelLayout layout;
@@ -36,11 +34,11 @@ int main()
 		}
 	};
 
-	layout.WriteToFile("model_description.json");
+	layout.WriteToFile(model_description_path);
 	// --------------------------------------------------------------------------------------------
 
 	// Create the Model In Python -----------------------------------------------------------------
-	const std::string python_script = "python ../PythonScripts/build_model_from_json.py \"model_description.json\"";
+	const std::string python_script = "python ../PythonScripts/build_model_from_json.py \"" + model_description_path + "\"";
 
 	int32_t exit_code = std::system(python_script.c_str());
 	if (exit_code != 0)

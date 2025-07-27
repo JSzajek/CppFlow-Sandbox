@@ -7,8 +7,17 @@ namespace TF
 {
 	void ModelLayout::WriteToFile(const std::filesystem::path& filepath)
 	{
+		std::filesystem::path parent_path = filepath.parent_path();
+		if (!std::filesystem::is_directory(parent_path) || !std::filesystem::exists(parent_path))
+			std::filesystem::create_directory(parent_path);
+
 		nlohmann::json j = to_json();
-		std::ofstream("model_description.json") << j.dump(2);
+
+		std::ofstream ofs(filepath);
+		if (!ofs)
+			throw std::runtime_error("Failed to open file for writing: " + filepath.string());
+
+		ofs << to_json().dump(4);
 	}
 
 

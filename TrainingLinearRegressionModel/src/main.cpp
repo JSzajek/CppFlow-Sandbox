@@ -2,15 +2,14 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <cppflow/cppflow.h>
-
-#include "TFUtilities.h"
-#include "TFModelLayout.h"
-#include "TFTrainingBatch.h"
+#include "TFModelLib.h"
 
 int main()
 {
 	const std::string model_name = "linear";
+	const std::string model_description_path = model_name + "/model_description.json";
+
+	const std::string trained_model_name = "trained_linear";
 
 	// Create Model Description -------------------------------------------------------------------
 	TF::ModelLayout layout;
@@ -50,15 +49,13 @@ int main()
 		}
 	};
 
-	layout.WriteToFile("model_description.json");
+	layout.WriteToFile(model_description_path);
 	// --------------------------------------------------------------------------------------------
 
-
 	// Create the Model In Python -----------------------------------------------------------------
-	std::stringstream python_script;
-	python_script << "python ../PythonScripts/build_model_from_json.py \"model_description.json\"";
+	const std::string python_script = "python ../PythonScripts/build_model_from_json.py \"" + model_description_path + "\"";
 
-	int32_t exit_code = std::system(python_script.str().c_str());
+	int32_t exit_code = std::system(python_script.c_str());
 	if (exit_code != 0)
 	{
 		std::cerr << "Failed to Execute Model Creation Python script. Exit code: " << exit_code << std::endl;
@@ -167,7 +164,7 @@ int main()
 
 
 	// Run trained model
-	cppflow::model trainedModel("trained_" + model_name);
+	cppflow::model trainedModel(model_name);
 	results = trainedModel(inputs_vec, outputs_vec);
 
 	// Output the trained results -----------------------------------------------------------------

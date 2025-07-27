@@ -4,7 +4,7 @@
 #include <sstream>
 #include <vector>
 
-#include <cppflow/cppflow.h>
+#include "CppFlowLib.h"
 
 namespace TF
 {

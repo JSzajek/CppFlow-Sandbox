@@ -16,23 +16,32 @@ def build_model(layout):
         typ = layer["type"]
         params = layer["params"]
         if typ == "Add":
-            layers[params["output_name"]] = tf.keras.layers.Add()([layers[n] for n in params["input_names"]])
+            layers[params["output_name"]] = tf.keras.layers.Add(
+                name=params["output_name"]
+            )([layers[n] for n in params["input_names"]])
+        if typ == "Multiply":
+            layers[params["output_name"]] = tf.keras.layers.Multiply(
+                name=params["output_name"]
+            )([layers[n] for n in params["input_names"]])
         elif typ == "Dense":
             layers[params["output_name"]] = tf.keras.layers.Dense(
                 units=params["units"],
-                activation=params.get("activation", None)
+                activation=params.get("activation", None),
+                name=params["output_name"]
             )(layers[params["input_name"]])
         elif typ == "Flatten":
-            layers[params["output_name"]] = tf.keras.layers.Flatten()(
-                layers[params["input_name"]]
-            )
+            layers[params["output_name"]] = tf.keras.layers.Flatten(
+                name=params["output_name"]
+            )(layers[params["input_name"]])
         elif typ == "Activation":
             layers[params["output_name"]] = tf.keras.layers.Activation(
-                activation=params["activation"]
+                activation=params["activation"],
+                name=params["output_name"]
             )(layers[params["input_name"]])
         elif typ == "Dropout":
             layers[params["output_name"]] = tf.keras.layers.Dropout(
-                rate=params["rate"]
+                rate=params["rate"],
+                name=params["output_name"]
             )(layers[params["input_name"]])
         elif typ == "Conv2D":
             layers[params["output_name"]] = tf.keras.layers.Conv2D(
@@ -40,18 +49,20 @@ def build_model(layout):
                 kernel_size=tuple(params["kernel_size"]),
                 strides=tuple(params.get("strides", [1, 1])),
                 padding=params.get("padding", "valid"),
-                activation=params.get("activation", None)
+                activation=params.get("activation", None),
+                name=params["output_name"]
             )(layers[params["input_name"]])
         elif typ == "MaxPooling2D":
             layers[params["output_name"]] = tf.keras.layers.MaxPooling2D(
                 pool_size=tuple(params.get("pool_size", [2, 2])),
                 strides=tuple(params.get("strides", [2, 2])),
-                padding=params.get("padding", "valid")
+                padding=params.get("padding", "valid"),
+                name=params["output_name"]
             )(layers[params["input_name"]])
         elif typ == "BatchNormalization":
-            layers[params["output_name"]] = tf.keras.layers.BatchNormalization()(
-                layers[params["input_name"]]
-            )
+            layers[params["output_name"]] = tf.keras.layers.BatchNormalization(
+                name=params["output_name"]
+            )(layers[params["input_name"]])
         # TODO:: Extend with more layer types...
 
     outputs = [layers[o["name"]] for o in layout["outputs"]]
