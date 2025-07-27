@@ -45,6 +45,7 @@ group ""
 	include "LinearRegressionModel"
 	include "ClassifierModel"
 	include "TrainingLinearRegressionModel"
+	include "TrainingClassifierModel"
 group ""
 
 

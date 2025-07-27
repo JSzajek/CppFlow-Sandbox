@@ -39,7 +39,7 @@ int main()
 	}
 
 
-	// Example Input Image
+	// Example Input
 	cppflow::tensor input_x = cppflow::tensor(std::vector<float>{ 1.0f, 2.0f, 3.0f, 4.0f }, { 4, 1 });
 
 	std::unordered_map<std::string, cppflow::tensor> inputs;

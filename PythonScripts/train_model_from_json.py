@@ -18,6 +18,13 @@ def load_json(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
 
+def load_image_as_tensor(path, target_shape, dtype):
+    img = tf.io.read_file(path)
+    img = tf.image.decode_image(img, channels=target_shape[-1], dtype=dtype, expand_animations=False)
+    img = tf.image.resize(img, target_shape[:2])
+    img = tf.cast(img, dtype)
+    return img
+
 def main(input_model, output_model, train_config_json, train_data_json):
     # Load files --------------------------------------------------------------
     layout = load_json(input_model + "/model_description.json")
@@ -36,9 +43,19 @@ def main(input_model, output_model, train_config_json, train_data_json):
         name = input_spec["name"]
         dtype = tf_dtype_from_string(input_spec["dtype"])
         shape = input_spec["shape"]
-        domain = input_spec["domain"]
+        domain = input_spec.get("domain", "data")
 
-        tensor = tf.convert_to_tensor(train_data["inputs"][name], dtype=dtype)
+        if (domain == "image"):
+            print(f"Loading Image Inputs For '{name}'...")
+
+            data_paths = train_data["inputs"][name]
+            img_tensors = [
+                load_image_as_tensor(path_list[0], shape[1:], dtype)
+                for path_list in data_paths
+            ]
+            tensor = tf.stack(img_tensors)
+        else:
+            tensor = tf.convert_to_tensor(train_data["inputs"][name], dtype=dtype)
 
         # Determine expected shape (ignore -1 for batch size)
         target_shape = [dim for dim in shape if dim != -1]

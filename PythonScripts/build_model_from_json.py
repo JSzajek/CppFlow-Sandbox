@@ -43,6 +43,15 @@ def build_model(layout):
                 rate=params["rate"],
                 name=params["output_name"]
             )(layers[params["input_name"]])
+        elif typ == "Conv1D":
+            layers[params["output_name"]] = tf.keras.layers.Conv1D(
+                filters=params["filters"],
+                kernel_size=params["kernel_size"],
+                strides=params.get("strides", 1),
+                padding=params.get("padding", "valid"),
+                activation=params.get("activation", None),
+                name=params["output_name"]
+            )(layers[params["input_name"]])
         elif typ == "Conv2D":
             layers[params["output_name"]] = tf.keras.layers.Conv2D(
                 filters=params["filters"],
