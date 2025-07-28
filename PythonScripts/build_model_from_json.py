@@ -2,9 +2,12 @@
 import tensorflow as tf
 import json
 import sys
+from model_info import extract_tensor_names
+from model_info import extract_model_layout
 from pathlib import Path
 from tensorflow.python.tools import saved_model_utils
 from tensorflow.core.protobuf import saved_model_pb2
+
 
 def build_model(layout):
     inputs = {}
@@ -78,22 +81,6 @@ def build_model(layout):
     model = tf.keras.Model(inputs=list(inputs.values()), outputs=outputs)
     return model
 
-def extract_tensor_names(saved_model_dir, signature="serving_default"):
-    meta_graph_def = saved_model_utils.get_meta_graph_def(saved_model_dir, tag_set="serve")
-    sig_def = meta_graph_def.signature_def[signature]
-
-    io_info = {
-        "inputs": {},
-        "outputs": {}
-    }
-
-    for k, v in sig_def.inputs.items():
-        io_info["inputs"][k] = v.name
-
-    for k, v in sig_def.outputs.items():
-        io_info["outputs"][k] = v.name
-
-    return io_info
 
 def main(json_path):
     with open(json_path, "r") as f:

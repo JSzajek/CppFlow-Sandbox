@@ -10,7 +10,10 @@ int main()
 {
 	TF::MLModel model("simple_mnist");
 
-	model.AddInput("input", "float32", { -1, 28, 28, 1 }, "image");
+	model.AddInput( "input", 
+				   TF::DataType::Float32,
+				   { -1, 28, 28, 1 }, 
+				   TF::DomainType::Image);
 
 	model.AddOutput("class_probs");
 

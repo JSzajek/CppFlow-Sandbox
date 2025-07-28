@@ -8,7 +8,9 @@ int main()
 {
 	TF::MLModel model("linear");
 
-	model.AddInput("x", "float32", { -1, 1 });
+	model.AddInput("x", 
+				   TF::DataType::Float32,
+				   { -1, 1 });
 
 	model.AddOutput("y");
 

@@ -5,6 +5,79 @@
 
 namespace TF
 {
+	std::string DataTypeToString(DataType type)
+	{
+		switch (type)
+		{
+		case DataType::Bool:
+			return "bool";
+		case DataType::UInt8:
+			return "uint8";
+		case DataType::Float32:
+			return "float32";
+		case DataType::Float64:
+			return "float64";
+		case DataType::Double:
+			return "double";
+		case DataType::Int32:
+			return "int32";
+		case DataType::Int64:
+			return "int64";
+		default:
+			throw std::invalid_argument("Unsupported DataType");
+		}
+		return "";
+	}
+
+	DataType StringToDataType(const std::string& str)
+	{
+		if (str == "bool")
+			return DataType::Bool;
+		else if (str == "uint8")
+			return DataType::UInt8;
+		else if (str == "float32")
+			return DataType::Float32;
+		else if (str == "float64")
+			return DataType::Float64;
+		else if (str == "double")
+			return DataType::Double;
+		else if (str == "int32")
+			return DataType::Int32;
+		else if (str == "int64")
+			return DataType::Int64;
+		else
+			throw std::invalid_argument("Unsupported DataType String: " + str);
+
+		return DataType::Float32; // Default Fallback
+	}
+
+	std::string DomainTypeToString(DomainType type)
+	{
+		switch (type)
+		{
+		case DomainType::Data:
+			return "data";
+		case DomainType::Image:
+			return "image";
+		default:
+			throw std::invalid_argument("Unsupported DomainType");
+		}
+		return "";
+	}
+
+	DomainType StringToDomainType(const std::string& str)
+	{
+		if (str == "data")
+			return DomainType::Data;
+		else if (str == "image")
+			return DomainType::Image;
+		else
+			throw std::invalid_argument("Unsupported DomainType String: " + str);
+
+		return DomainType::Data; // Default Fallback
+	}
+
+
 	void ModelLayout::WriteToFile(const std::filesystem::path& filepath) const
 	{
 		std::filesystem::path parent_path = filepath.parent_path();
@@ -28,12 +101,15 @@ namespace TF
 
 		for (const auto& input : inputs)
 		{
+			const std::string type_str = DataTypeToString(input.type);
+			const std::string domain_str = DomainTypeToString(input.domain);
+
 			result["inputs"].push_back(
 			{
 				{ "name", input.name },
-				{ "dtype", input.dtype },
+				{ "dtype", type_str },
 				{ "shape", input.shape },
-				{ "domain", input.domain }
+				{ "domain", domain_str }
 			});
 		}
 
@@ -67,9 +143,9 @@ namespace TF
 			layout.inputs.push_back(
 			{ 
 				jin.at("name"), 
-				jin.at("dtype"), 
+				StringToDataType(jin.at("dtype")),
 				jin.at("shape").get<std::vector<int>>(),
-				jin.value("input_type", "data") // Default to "data" if not specified
+				StringToDomainType(jin.value("input_type", "data")) // Default to "data" if not specified
 			});
 
 		}

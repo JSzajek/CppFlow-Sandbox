@@ -36,6 +36,7 @@
 *.data*
 *.json
 *.pb
+*.pyc
 
 
 .vs/

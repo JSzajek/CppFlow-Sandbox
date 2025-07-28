@@ -14,9 +14,9 @@ namespace TF
 	}
 
 	void MLModel::AddInput(const std::string& name,
-						   const std::string& dtype,
+						   DataType dtype,
 						   std::vector<int> shape, 
-						   const std::string& domain)
+						   DomainType domain)
 	{
 		mLayout.inputs.push_back(
 		{ 

@@ -22,9 +22,9 @@ namespace TF
 		~MLModel();
 	public:
 		void AddInput(const std::string& name,
-					  const std::string& dtype,
+					  DataType dtype,
 					  std::vector<int> shape, 
-					  const std::string& domain = "data");
+					  DomainType domain = DomainType::Data);
 
 		void AddOutput(const std::string& name);
 
@@ -44,12 +44,26 @@ namespace TF
 		bool CreateModel();
 
 		// Launch Python training
-		bool TrainModel(const std::string& output_name = "",
+		bool TrainModel(const std::string& output_name,
 						uint32_t epochs = 10,
 						uint32_t batchSize = 32,
 						float learning_rate = 0.001f,
 						bool shuffle = true,
 						float validation_split = 0.0f);
+
+		bool TrainModel(uint32_t epochs = 10,
+						uint32_t batchSize = 32,
+						float learning_rate = 0.001f,
+						bool shuffle = true,
+						float validation_split = 0.0f)
+		{
+			return TrainModel("", 
+							  epochs, 
+							  batchSize, 
+							  learning_rate, 
+							  shuffle, 
+							  validation_split);
+		}
 
 		// Inference
 		bool Run(const std::unordered_map<std::string, cppflow::tensor>& input_tensors,

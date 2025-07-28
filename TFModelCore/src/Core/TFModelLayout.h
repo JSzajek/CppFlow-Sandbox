@@ -9,20 +9,35 @@
 
 namespace TF
 {
+	enum class DataType
+	{
+		Bool,
+		UInt8,
+		Float32,
+		Float64,
+		Double,
+		Int32,
+		Int64,
+	};
+
+	enum class DomainType 
+	{
+		Data,
+		Image,
+	};
+
 	struct Input
 	{
 	public:
 		// Desired input node name
 		std::string name;
 
-		// e.g. "float32"
-		std::string dtype;
+		DataType type = DataType::Float32;
 
 		// Shape of the input tensor, use -1 for dynamic dimensions
 		std::vector<int> shape;
 
-		// "data" or "image"
-		std::string domain = "data"; 
+		DomainType domain = DomainType::Data;
 	};
 
 	struct Output

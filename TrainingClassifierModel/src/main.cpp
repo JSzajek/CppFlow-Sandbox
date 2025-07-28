@@ -10,7 +10,10 @@ int main()
 {
 	TF::MLModel model("simple_mnist");
 
-	model.AddInput("input", "float32", { -1, 28, 28, 1 }, "image");
+	model.AddInput("input", 
+				   TF::DataType::Float32,
+				   { -1, 28, 28, 1 }, 
+				   TF::DomainType::Image);
 
 	model.AddOutput("class_probs");
 
@@ -137,7 +140,7 @@ int main()
 						  "class_probs", 
 						  { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f });
 
-	if (!model.TrainModel("", 64))
+	if (!model.TrainModel(64))
 	{
 		std::cerr << "Failed to Train Model." << std::endl;
 		return -1;

@@ -8,7 +8,9 @@ int main()
 {
 	TF::MLModel model("linear");
 
-	model.AddInput("x", "float32", { -1, 4, 1 });
+	model.AddInput("x", 
+				   TF::DataType::Float32, 
+				   { -1, 4, 1 });
 
 	model.AddOutput("y");
 
@@ -85,7 +87,7 @@ int main()
 						  "y", 
 						  { 0, 1.0f });
 
-	if (!model.TrainModel("", 64))
+	if (!model.TrainModel(64))
 	{
 		std::cerr << "Failed to Train Model." << std::endl;
 		return -1;

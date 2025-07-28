@@ -8,8 +8,13 @@ int main()
 {
 	TF::MLModel model("simple_add");
 
-	model.AddInput("x", "float32", { -1 });
-	model.AddInput("y", "float32", { -1 });
+	model.AddInput("x", 
+				   TF::DataType::Float32,
+				   { -1 });
+
+	model.AddInput("y", 
+				   TF::DataType::Float32,
+				   { -1 });
 
 	model.AddOutput("add_result");
 
