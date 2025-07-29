@@ -21,6 +21,14 @@ namespace TF
 
 		~MLModel();
 	public:
+		/// <summary>
+		/// Loads Pre-Trained Models. Currently Only Supports loading ONNX or SavedModel format models.
+		/// 
+		/// Non-SavedModel formats will be converted to SavedModel format.
+		/// </summary>
+		/// <param name="loadpath"></param>
+		void LoadFrom(const std::filesystem::path& loadpath);
+
 		void AddInput(const std::string& name,
 					  DataType dtype,
 					  std::vector<int> shape, 
@@ -71,6 +79,9 @@ namespace TF
 
 		// Utility
 		void ExportAll(const std::filesystem::path& directory) const;
+	private:
+		bool ConvertModelToSavedModel(const std::filesystem::path& filepath,
+									  const std::filesystem::path& outputpath);
 	public:
 		std::string mName;
 

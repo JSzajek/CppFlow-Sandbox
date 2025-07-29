@@ -78,6 +78,22 @@ namespace TF
 	}
 
 
+	void ModelLayout::ReadFromFile(const std::filesystem::path& filepath)
+	{
+		std::ifstream ifs(filepath);
+		if (!ifs)
+			throw std::runtime_error("Failed to open file for reading: " + filepath.string());
+
+		nlohmann::json j;
+		ifs >> j;
+		ModelLayout layout = from_json(j);
+
+		model_name	= layout.model_name;
+		inputs		= std::move(layout.inputs);
+		outputs		= std::move(layout.outputs);
+		layers		= std::move(layout.layers);
+	}
+
 	void ModelLayout::WriteToFile(const std::filesystem::path& filepath) const
 	{
 		std::filesystem::path parent_path = filepath.parent_path();

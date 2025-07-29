@@ -60,6 +60,7 @@ namespace TF
 	struct ModelLayout
 	{
 	public:
+		void ReadFromFile(const std::filesystem::path& filepath);
 		void WriteToFile(const std::filesystem::path& filepath) const;
 	private:
 		nlohmann::json to_json() const;

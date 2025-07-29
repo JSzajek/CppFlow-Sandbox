@@ -4,6 +4,7 @@ from tensorflow.core.protobuf import saved_model_pb2
 
 
 def extract_tensor_names(saved_model_dir, signature="serving_default"):
+
     meta_graph_def = saved_model_utils.get_meta_graph_def(saved_model_dir, tag_set="serve")
     sig_def = meta_graph_def.signature_def[signature]
 
@@ -24,6 +25,7 @@ def extract_tensor_names(saved_model_dir, signature="serving_default"):
 
 
 def extract_model_layout(model):
+
     layout = {
         "model_name": model.name,
         "inputs": [],

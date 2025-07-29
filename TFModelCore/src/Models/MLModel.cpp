@@ -2,7 +2,6 @@
 
 namespace TF
 {
-
 	MLModel::MLModel(const std::string& name)
 		: mName(name)
 	{
@@ -11,6 +10,58 @@ namespace TF
 
 	MLModel::~MLModel()
 	{
+	}
+
+	void MLModel::LoadFrom(const std::filesystem::path& loadpath)
+	{
+		std::string output_path = loadpath.string();
+		mName = loadpath.stem().string();
+
+		if (loadpath.has_extension() && loadpath.extension() == ".onnx")
+		{
+			output_path = (loadpath.parent_path() / loadpath.stem()).string();
+			mName = output_path;
+
+			if (!ConvertModelToSavedModel(loadpath, "./" + output_path))
+				return;
+
+		}
+
+		if (!std::filesystem::exists(loadpath))
+		{
+			std::cerr << "Load Model Path Does Not Exist: " << loadpath << std::endl;
+			return;
+		}
+
+
+		std::stringstream cmd;
+		cmd << "python ../PythonScripts/extract_model_info.py"
+			<< " \"" << output_path << "\"";
+
+		int32_t exit_code = std::system(cmd.str().c_str());
+		if (exit_code != 0)
+		{
+			std::cerr << "Failed to Extract Info From SavedModel {" << output_path << "} Exit code: " << exit_code << std::endl;
+			return;
+		}
+
+		// Load JSON with input/output tensor names
+		std::ifstream in(output_path + "/cppflow_io_names.json");
+		if (!in.is_open())
+		{
+			std::cerr << "Failed to open cppflow_io_names.json" << std::endl;
+			return;
+		}
+
+		nlohmann::json io_names;
+		in >> io_names;
+
+		for (auto& [key, val] : io_names["outputs"].items())
+			mOutputIONames.push_back(val.get<std::string>());
+
+		for (auto& [key, val] : io_names["inputs"].items())
+			mInputToIONamesMap[key] = val.get<std::string>();
+
 	}
 
 	void MLModel::AddInput(const std::string& name,
@@ -193,5 +244,22 @@ namespace TF
 		mCurrentTrainingBatch.WriteToFile(dir_path / "train_data.json");
 
 		std::cout << "Model and Training Data Exported to: " << dir_path << std::endl;
+	}
+
+	bool MLModel::ConvertModelToSavedModel(const std::filesystem::path& filepath,
+										   const std::filesystem::path& outputpath)
+	{
+		std::stringstream cmd;
+		cmd << "python ../PythonScripts/convert_onnx_to_saved_model.py"
+				 << " \"" << filepath.string() << "\""
+				 << " \"" << outputpath.string() << "\"";
+
+		int32_t exit_code = std::system(cmd.str().c_str());
+		if (exit_code != 0)
+		{
+			std::cerr << "Failed to convert model to SavedModel format. Exit code: " << exit_code << std::endl;
+			return false;
+		}
+		return true;	
 	}
 }
