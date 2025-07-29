@@ -80,11 +80,12 @@ namespace TF
 			throw std::invalid_argument("Width and Height must be greater than zero.");
 		}
 
-		if (mChannelOrder != ChannelOrder::BGR && mChannelOrder != ChannelOrder::BGRA &&
+		if (mChannelOrder != ChannelOrder::GrayScale && 
+			mChannelOrder != ChannelOrder::BGR && mChannelOrder != ChannelOrder::BGRA &&
 			mChannelOrder != ChannelOrder::RGB && mChannelOrder != ChannelOrder::RGBA)
 		{
 			throw std::invalid_argument("Invalid channel order specified.");
-		}
+	}
 	}
 
 	bool ImageTensorLoader::Load(const std::string& image_path, cppflow::tensor& output)
@@ -107,18 +108,72 @@ namespace TF
 			image.convertTo(image, CV_32FC(mChannels), 1.0 / 255.0);
 		}
 
-
 		std::vector<float> input_data;
-		for (uint32_t c = 0; c < mChannels; ++c) 
+		const auto InputPixel = [&](uint32_t x, uint32_t y, uint32_t c) -> bool
 		{
-			for (uint32_t y = 0; y < mHeight; ++y)
+			switch (mChannelOrder)
+			{
+				case ChannelOrder::GrayScale:
+					input_data.push_back(image.at<float>(y, x));
+					return true;
+				case ChannelOrder::BGR:
+				case ChannelOrder::RGB:
+					input_data.push_back(image.at<cv::Vec3f>(y, x)[c]);
+					return true;
+				case ChannelOrder::BGRA:
+				case ChannelOrder::RGBA:
+					input_data.push_back(image.at<cv::Vec4f>(y, x)[c]);
+					return true;
+				default:
+					std::cerr << "Unsupported Channel Order." << std::endl;
+					return false;
+			}
+		};
+
+		switch (mShapeOrder)
+		{
+			case ShapeOrder::HeightWidthChannels:
+			{
+				for (uint32_t y = 0; y < mHeight; ++y)
+					for (uint32_t x = 0; x < mWidth; ++x)
+						for (uint32_t c = 0; c < mChannels; ++c)
+							if (!InputPixel(x, y, c))
+								continue;
+				break;
+			}
+			case ShapeOrder::WidthHeightChannels:
 			{
 				for (uint32_t x = 0; x < mWidth; ++x)
-				{
-					input_data.push_back(image.at<cv::Vec3f>(y, x)[c]);
-				}
+					for (uint32_t y = 0; y < mHeight; ++y)
+						for (uint32_t c = 0; c < mChannels; ++c)
+							if (!InputPixel(x, y, c))
+								continue;
+				break;
 			}
+			case ShapeOrder::ChannelsHeightWidth:
+			{
+				for (uint32_t c = 0; c < mChannels; ++c)
+					for (uint32_t y = 0; y < mHeight; ++y)
+						for (uint32_t x = 0; x < mWidth; ++x)
+							if (!InputPixel(x, y, c))
+								continue;
+				break;
+			}
+			case ShapeOrder::ChannelsWidthHeight:
+			{
+				for (uint32_t c = 0; c < mChannels; ++c)
+					for (uint32_t x = 0; x < mWidth; ++x)
+						for (uint32_t y = 0; y < mHeight; ++y)
+							if (!InputPixel(x, y, c))
+								continue;
+				break;
+			}
+			default:
+				std::cerr << "Unsupported Shape Order." << std::endl;
+				return false;
 		}
+
+		
 
 		if (input_data.empty())
 		{

@@ -10,9 +10,12 @@ int main()
 {
 	TF::MLModel model("simple_mnist");
 
+	int32_t target_width = 28;
+	int32_t target_height = 28;
+
 	model.AddInput( "input", 
 				   TF::DataType::Float32,
-				   { -1, 28, 28, 1 }, 
+				   { -1, target_width, target_height, 1 },
 				   TF::DomainType::Image);
 
 	model.AddOutput("class_probs");
@@ -46,29 +49,21 @@ int main()
 	}
 
 
-	// Example Input Image
-	cv::Mat image = cv::imread("digit.png", cv::IMREAD_GRAYSCALE);
 
-	if (image.empty())
-	{
-		std::cerr << "Failed to load image\n";
-		return -1;
-	}
+	TF::ImageTensorLoader image_loader(target_width, 
+									   target_height, 
+									   1, 
+									   true, 
+									   TF::ImageTensorLoader::ChannelOrder::GrayScale,
+									   TF::ImageTensorLoader::ShapeOrder::WidthHeightChannels);
 
-	// Resize to 28x28
-	cv::resize(image, image, cv::Size(28, 28));
-
-	// Normalize to [0, 1]
-	image.convertTo(image, CV_32FC1, 1.0 / 255.0);
-
-	// Flatten to 1D vector
-	std::vector<float> input_data(image.begin<float>(), image.end<float>());
-
-	// Create input tensor 
-	cppflow::tensor input_tensor(input_data, { 1, 28, 28, 1 });
 
 	std::unordered_map<std::string, cppflow::tensor> inputs;
-	inputs["input"] = input_tensor;
+	if (!image_loader.Load("digit.png", inputs["input"]))
+	{
+		std::cerr << "Failed to Load Image" << std::endl;
+		return false;
+	}
 
 	TF::MLModel::Result results;
 	if (model.Run(inputs, results))
