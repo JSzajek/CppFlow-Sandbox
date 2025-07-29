@@ -63,7 +63,10 @@ int main()
 				}
 			}
 
-			cv::imshow(category_name, cv::imread(imagepath));
+			cv::Mat image = cv::imread(imagepath, cv::IMREAD_UNCHANGED);
+			cv::resize(image, image, cv::Size(512, 512));
+
+			cv::imshow(category_name, image);
 			cv::waitKey();
 
 			// --------------------------------------------------------------------------------------------
