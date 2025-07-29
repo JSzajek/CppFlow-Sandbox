@@ -61,12 +61,12 @@ Open the generated .sln file and build the project.
 TF::MLModel model("<model_name>");
 
 model.AddInput("x", 
-			      TF::DataType::Float32,
-			      { -1 });
+			   TF::DataType::Float32,
+			   { -1 });
 
 model.AddInput("y", 
-			      TF::DataType::Float32,
-			      { -1 });
+			   TF::DataType::Float32,
+			   { -1 });
 
 model.AddOutput("add_result");
 
@@ -94,11 +94,11 @@ if (model.Run(inputs, results))
 #### Image Pre-Processing
 ```
 TF::ImageTensorLoader image_loader(target_width, 
-								   target_height, 
-								   1, 
-								   true, 
-								   TF::ChannelOrder::GrayScale,
-								   TF::ShapeOrder::WidthHeightChannels);
+                                   target_height, 
+                                   1, 
+                                   true, 
+                                   TF::ChannelOrder::GrayScale,
+                                   TF::ShapeOrder::WidthHeightChannels);
 
 
 std::unordered_map<std::string, cppflow::tensor> inputs;
