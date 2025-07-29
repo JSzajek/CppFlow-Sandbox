@@ -2,25 +2,21 @@
 
 namespace TF
 {
-	MLModel::MLModel(const std::string& name)
-		: mName(name)
+	MLModel::MLModel(const std::filesystem::path& modelpath)
+		: mModelPath(modelpath.string())
 	{
-		mLayout.model_name = name;
-	}
-
-	MLModel::~MLModel()
-	{
+		mLayout.mModelName = modelpath.stem().string();
 	}
 
 	void MLModel::LoadFrom(const std::filesystem::path& loadpath)
 	{
 		std::string output_path = loadpath.string();
-		mName = loadpath.stem().string();
+		mModelPath = loadpath.stem().string();
 
 		if (loadpath.has_extension() && loadpath.extension() == ".onnx")
 		{
 			output_path = (loadpath.parent_path() / loadpath.stem()).string();
-			mName = output_path;
+			mModelPath = output_path;
 
 			if (!ConvertModelToSavedModel(loadpath, "./" + output_path))
 				return;
@@ -69,7 +65,7 @@ namespace TF
 						   std::vector<int> shape, 
 						   DomainType domain)
 	{
-		mLayout.inputs.push_back(
+		mLayout.mInputs.push_back(
 		{ 
 			name, 
 			dtype, 
@@ -80,7 +76,7 @@ namespace TF
 
 	void MLModel::AddOutput(const std::string& name)
 	{
-		mLayout.outputs.push_back(
+		mLayout.mOutputs.push_back(
 		{ 
 			name 
 		});
@@ -89,7 +85,7 @@ namespace TF
 	void MLModel::AddLayer(const std::string& type, 
 						   const std::unordered_map<std::string, nlohmann::json>& params)
 	{
-		mLayout.layers.push_back(
+		mLayout.mLayers.push_back(
 		{ 
 			type, 
 			params 
@@ -102,15 +98,15 @@ namespace TF
 								  const nlohmann::json& label_outputs)
 	{
 		NamedInput input;
-		input.name = input_name;
-		input.data = input_values;
+		input.mName = input_name;
+		input.mData = input_values;
 
 		NamedLabel label;
-		label.name = label_name; // Default label name, can be customized
-		label.data = label_outputs;
+		label.mName = label_name;
+		label.mData = label_outputs;
 
-		mCurrentTrainingBatch.inputs.push_back(input);
-		mCurrentTrainingBatch.labels.push_back(label);
+		mCurrentTrainingBatch.mInputs.push_back(input);
+		mCurrentTrainingBatch.mLabels.push_back(label);
 	}
 
 	void MLModel::SaveLayoutJson(const std::filesystem::path& path) const
@@ -128,7 +124,7 @@ namespace TF
 		mOutputIONames.clear();
 
 		// Write the layout to a file
-		const std::string model_description_path = "./" + mName + "/model_description.json";
+		const std::string model_description_path = "./" + mModelPath + "/model_description.json";
 		mLayout.WriteToFile(model_description_path);
 
 
@@ -144,7 +140,7 @@ namespace TF
 
 
 		// Load JSON with input/output tensor names
-		std::ifstream in(mName + "/cppflow_io_names.json");
+		std::ifstream in(mModelPath + "/cppflow_io_names.json");
 		if (!in.is_open())
 		{
 			std::cerr << "Failed to open cppflow_io_names.json" << std::endl;
@@ -170,7 +166,7 @@ namespace TF
 							 bool shuffle, 
 							 float validation_split)
 	{
-		if (mCurrentTrainingBatch.inputs.empty() || mCurrentTrainingBatch.labels.empty())
+		if (mCurrentTrainingBatch.mInputs.empty() || mCurrentTrainingBatch.mLabels.empty())
 			return false;
 
 
@@ -186,11 +182,11 @@ namespace TF
 
 		mCurrentTrainingBatch.WriteToFile("train/train_data.json");
 
-		std::string outputName = output_name.empty() ? mName : output_name;
+		std::string outputName = output_name.empty() ? mModelPath : output_name;
 
 		std::stringstream trainCmd;
 		trainCmd << "python ../PythonScripts/train_model_from_json.py"
-				 << " \"" << mName << "\""
+				 << " \"" << mModelPath << "\""
 				 << " \"" << outputName << "\""
 				 << " \"train/train_config.json\""
 				 << " \"train/train_data.json\"";
@@ -223,7 +219,7 @@ namespace TF
 			inputs_vec.emplace_back(found->second, tensor);
 		}
 
-		cppflow::model model(mName);
+		cppflow::model model(mModelPath);
 		std::vector<cppflow::tensor> results = model(inputs_vec, mOutputIONames);
 
 		for (size_t i = 0; i < results.size(); ++i)

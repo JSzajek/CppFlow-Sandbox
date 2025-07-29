@@ -8,6 +8,12 @@
 
 namespace TF
 {
+	/// <summary>
+	/// Utility function to print the contents of a tensor in a human-readable format.
+	/// </summary>
+	/// <typeparam name="T">The data type of the tensor</typeparam>
+	/// <param name="tensor">The input tensor</param>
+	/// <returns>The string form of the tensor</returns>
 	template<typename T>
 	static std::string PrintTensor(const cppflow::tensor& tensor)
 	{

@@ -19,8 +19,8 @@ int main()
 									   target_height, 
 									   3, 
 									   true, 
-									   TF::ImageTensorLoader::ChannelOrder::RGB,
-									   TF::ImageTensorLoader::ShapeOrder::ChannelsHeightWidth);
+									   TF::ChannelOrder::RGB,
+									   TF::ShapeOrder::ChannelsHeightWidth);
 	
 	// Load Labels
 	std::ifstream in("data/label_map.json");

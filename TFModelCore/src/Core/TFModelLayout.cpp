@@ -88,10 +88,10 @@ namespace TF
 		ifs >> j;
 		ModelLayout layout = from_json(j);
 
-		model_name	= layout.model_name;
-		inputs		= std::move(layout.inputs);
-		outputs		= std::move(layout.outputs);
-		layers		= std::move(layout.layers);
+		mModelName	= layout.mModelName;
+		mInputs		= std::move(layout.mInputs);
+		mOutputs	= std::move(layout.mOutputs);
+		mLayers		= std::move(layout.mLayers);
 	}
 
 	void ModelLayout::WriteToFile(const std::filesystem::path& filepath) const
@@ -113,50 +113,50 @@ namespace TF
 	nlohmann::json ModelLayout::to_json() const
 	{
 		nlohmann::json result;
-		result["model_name"] = model_name;
+		result["model_name"] = mModelName;
 
-		for (const auto& input : inputs)
+		for (const auto& input : mInputs)
 		{
-			const std::string type_str = DataTypeToString(input.type);
-			const std::string domain_str = DomainTypeToString(input.domain);
+			const std::string type_str = DataTypeToString(input.mType);
+			const std::string domain_str = DomainTypeToString(input.mDomain);
 
 			result["inputs"].push_back(
 			{
-				{ "name", input.name },
+				{ "name", input.mName },
 				{ "dtype", type_str },
-				{ "shape", input.shape },
+				{ "shape", input.mShape },
 				{ "domain", domain_str }
 			});
 		}
 
-		for (const auto& output : outputs)
+		for (const auto& output : mOutputs)
 		{
 			result["outputs"].push_back(
 			{
-				{ "name", output.name }
+				{ "name", output.mName }
 			});
 		}
 
-		for (const auto& layer : layers)
+		for (const auto& layer : mLayers)
 		{
 			result["layers"].push_back(
 			{
-				{ "type", layer.type },
-				{ "params", layer.params }
+				{ "type", layer.mType },
+				{ "params", layer.mParameters }
 			});
 		}
 
 		return result;
 	}
 
-	ModelLayout ModelLayout::from_json(const nlohmann::json& j)
+	ModelLayout ModelLayout::from_json(const nlohmann::json& inputJson)
 	{
 		ModelLayout layout;
-		layout.model_name = j.at("model_name");
+		layout.mModelName = inputJson.at("model_name");
 
-		for (const auto& jin : j.at("inputs"))
+		for (const auto& jin : inputJson.at("inputs"))
 		{
-			layout.inputs.push_back(
+			layout.mInputs.push_back(
 			{ 
 				jin.at("name"), 
 				StringToDataType(jin.at("dtype")),
@@ -166,17 +166,17 @@ namespace TF
 
 		}
 
-		for (const auto& jout : j.at("outputs"))
+		for (const auto& jout : inputJson.at("outputs"))
 		{
-			layout.outputs.push_back(
+			layout.mOutputs.push_back(
 			{ 
 				jout.at("name") 
 			});
 		}
 
-		for (const auto& jlayer : j.at("layers"))
+		for (const auto& jlayer : inputJson.at("layers"))
 		{
-			layout.layers.push_back(
+			layout.mLayers.push_back(
 			{ 
 				jlayer.at("type"), 
 				jlayer.at("params") 

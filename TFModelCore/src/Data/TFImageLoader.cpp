@@ -1,10 +1,13 @@
 #include "TFImageLoader.h"
 
 #include <cppflow/cppflow.h>
+#include <opencv2/opencv.hpp>
 
 namespace TF
 {
-	bool ConvertToChannels(cv::Mat& img, int desired_channels, bool to_rgb = true) 
+	bool ConvertToChannels(cv::Mat& img, 
+						   uint32_t desired_channels, 
+						   bool to_rgb = true) 
 	{
 		int current_channels = img.channels();
 
@@ -62,7 +65,7 @@ namespace TF
 										 uint32_t channels, 
 										 bool normalize, 
 										 ChannelOrder order, 
-										  ShapeOrder shape)
+										 ShapeOrder shape)
 		: mWidth(width),
 		mHeight(height),
 		mChannels(channels),

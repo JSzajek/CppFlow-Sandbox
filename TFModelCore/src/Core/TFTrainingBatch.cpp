@@ -14,8 +14,8 @@ namespace TF
 		ifs >> j;
 		TrainingBatch batch = from_json(j);
 
-		inputs = std::move(batch.inputs);
-		labels = std::move(batch.labels);
+		mInputs = std::move(batch.mInputs);
+		mLabels = std::move(batch.mLabels);
 	}
 
 	void TrainingBatch::WriteToFile(const std::filesystem::path& filepath) const
@@ -34,11 +34,11 @@ namespace TF
 	nlohmann::json TrainingBatch::to_json() const
 	{
 		nlohmann::json result;
-		for (const auto& input : inputs)
-			result["inputs"][input.name].push_back(input.data);
+		for (const auto& input : mInputs)
+			result["inputs"][input.mName].push_back(input.mData);
 
-		for (const auto& label : labels)
-			result["labels"][label.name].push_back(label.data);
+		for (const auto& label : mLabels)
+			result["labels"][label.mName].push_back(label.mData);
 
 		return result;
 	}
@@ -49,7 +49,7 @@ namespace TF
 
 		for (auto& [key, val] : inputJson["inputs"].items())
 		{
-			batch.inputs.push_back(
+			batch.mInputs.push_back(
 			{ 
 				key, 
 				val.get<std::vector<nlohmann::json>>() 
@@ -58,7 +58,7 @@ namespace TF
 
 		for (auto& [key, val] : inputJson["labels"].items())
 		{
-			batch.labels.push_back(
+			batch.mLabels.push_back(
 			{ 
 				key, 
 				val.get<std::vector<nlohmann::json>>() 

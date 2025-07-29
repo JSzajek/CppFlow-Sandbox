@@ -54,8 +54,8 @@ int main()
 									   target_height, 
 									   1, 
 									   true, 
-									   TF::ImageTensorLoader::ChannelOrder::GrayScale,
-									   TF::ImageTensorLoader::ShapeOrder::WidthHeightChannels);
+									   TF::ChannelOrder::GrayScale,
+									   TF::ShapeOrder::WidthHeightChannels);
 
 
 	std::unordered_map<std::string, cppflow::tensor> inputs;

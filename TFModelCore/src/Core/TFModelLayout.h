@@ -9,6 +9,9 @@
 
 namespace TF
 {
+	/// <summary>
+	/// Enum representing the data type of an input.
+	/// </summary>
 	enum class DataType
 	{
 		Bool,
@@ -20,63 +23,90 @@ namespace TF
 		Int64,
 	};
 
+	/// <summary>
+	/// Enum representing the domain type of an input.
+	/// </summary>
 	enum class DomainType 
 	{
 		Data,
 		Image,
 	};
 
+	/// <summary>
+	/// Struct representing the input layer of a model.
+	/// </summary>
 	struct Input
 	{
 	public:
 		// Desired input node name
-		std::string name;
+		std::string mName;
 
-		DataType type = DataType::Float32;
+		DataType mType = DataType::Float32;
 
 		// Shape of the input tensor, use -1 for dynamic dimensions
-		std::vector<int> shape;
+		std::vector<int> mShape;
 
-		DomainType domain = DomainType::Data;
+		DomainType mDomain = DomainType::Data;
 	};
 
+	/// <summary>
+	/// Struct representing the output layer of a model.
+	/// </summary>
 	struct Output
 	{
 	public:
 		// Desired output node name
-		std::string name;
+		std::string mName;
 	};
 
+	/// <summary>
+	/// Struct representing the layer of a model.
+	/// </summary>
 	struct Layer
 	{
 	public:
 		// e.g., "Flatten", "Add", "Activation", Dense", "Dropout", "Conv2D", "MaxPooling2D", "BatchNormalization"
-		std::string type;
+		std::string mType;
 
 		// Generic parameters
-		std::unordered_map<std::string, nlohmann::json> params;
+		std::unordered_map<std::string, nlohmann::json> mParameters;
 	};
 
+	/// <summary>
+	/// Struct representing the layout of a ML model.
+	/// </summary>
 	struct ModelLayout
 	{
 	public:
+		/// <summary>
+		/// Read the model layout from a JSON file.
+		/// </summary>
+		/// <param name="filepath">The file path</param>
 		void ReadFromFile(const std::filesystem::path& filepath);
+
+		/// <summary>
+		/// Write the model layout to a JSON file.
+		/// </summary>
+		/// <param name="filepath">The file path</param>
 		void WriteToFile(const std::filesystem::path& filepath) const;
 	private:
+		/// <summary>
+		/// Convert the model layout to a JSON object.
+		/// </summary>
+		/// <returns>The JSON object</returns>
 		nlohmann::json to_json() const;
 
-		static ModelLayout from_json(const nlohmann::json& j);
+		/// <summary>
+		/// Create a model layout from a JSON object.
+		/// </summary>
+		/// <param name="inputJson">The JSON object</param>
+		/// <returns>The created model layout</returns>
+		static ModelLayout from_json(const nlohmann::json& inputJson);
 	public:
-		// Model name, e.g., "simple_add", "image_classifier"
-		std::string model_name;
+		std::string mModelName;
 
-		// Input nodes, e.g., {"x", "float32", {-1}}, {"y", "float32", {-1}}
-		std::vector<TF::Input> inputs;
-
-		// Output nodes, e.g., {"add_result"}
-		std::vector<TF::Output> outputs;
-
-		// Layers in the model, e.g., {"Dense", {{"units", 64}, {"activation", "relu"}}}
-		std::vector<TF::Layer> layers;
+		std::vector<TF::Input> mInputs;
+		std::vector<TF::Output> mOutputs;
+		std::vector<TF::Layer> mLayers;
 	};
 }
