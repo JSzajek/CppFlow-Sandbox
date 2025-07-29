@@ -15,6 +15,10 @@ Ensure you have the following installed on your system:
     - Onnx (1.14.1)
 
 
+### Supported Model Formats
+- SavedModel TensforFlow
+- ONNX
+
 ### **How to Build**
 #### **Step 1: Clone the Repository**
 ```
@@ -54,15 +58,15 @@ Open the generated .sln file and build the project.
 ## Example Usage
 #### Model Creation 
 ```
-TF::MLModel model("simple_add");
+TF::MLModel model("<model_name>");
 
 model.AddInput("x", 
-			   TF::DataType::Float32,
-			   { -1 });
+			      TF::DataType::Float32,
+			      { -1 });
 
 model.AddInput("y", 
-			   TF::DataType::Float32,
-			   { -1 });
+			      TF::DataType::Float32,
+			      { -1 });
 
 model.AddOutput("add_result");
 
@@ -98,11 +102,27 @@ TF::ImageTensorLoader image_loader(target_width,
 
 
 std::unordered_map<std::string, cppflow::tensor> inputs;
-if (!image_loader.Load("digit.png", inputs["input"]))
+if (!image_loader.Load("<insert filepath>", inputs["<input label>"]))
 {
 	// Error Reading
 }
 ```
+
+## Samples
+- Simple Add Model
+- Linear Regression Model
+- Image Classification Model
+- Training Image Classification
+- Training Linear Regression
+- Loading Pre-Train Models
+
+
+### Future Roadmap
+- [ ] Embedded Python Environment
+- [ ] Improved Training Workflow
+- [ ] Runtime Efficient Inference API
+
+
 
 ## **License**
 This project is licensed under the Apache License. See the LICENSE file for more details.
