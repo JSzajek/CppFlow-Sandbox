@@ -1,4 +1,4 @@
-#include "TFModelLayout.h"
+#include "Core/TFModelLayout.h"
 
 #include <iostream>
 #include <fstream>
@@ -77,6 +77,64 @@ namespace TF
 		return DomainType::Data; // Default Fallback
 	}
 
+	std::string LayerTypeToString(LayerType type)
+	{
+		switch (type)
+		{
+			case LayerType::Add:
+				return "Add";
+			case LayerType::Multiply:
+				return "Multiply";
+			case LayerType::Dense:
+				return "Dense";
+			case LayerType::Flatten:
+				return "Flatten";
+			case LayerType::Activation:
+				return "Activation";
+			case LayerType::Dropout:
+				return "Dropout";
+			case LayerType::Conv1D:
+				return "Conv1D";
+			case LayerType::Conv2D:
+				return "Conv2D";
+			case LayerType::MaxPooling2D:
+				return "MaxPooling2D";
+			case LayerType::BatchNormalization:
+				return "BatchNormalization";
+			default:
+				throw std::invalid_argument("Unsupported LayerType");
+		}
+		return "";
+	}
+
+	LayerType StringToLayerType(const std::string& str)
+	{
+		if (str == "Add")
+			return LayerType::Add;
+		else if (str == "Multiply")
+			return LayerType::Multiply;
+		else if (str == "Dense")
+			return LayerType::Dense;
+		else if (str == "Flatten")
+			return LayerType::Flatten;
+		else if (str == "Activation")
+			return LayerType::Activation;
+		else if (str == "Dropout")
+			return LayerType::Dropout;
+		else if (str == "Conv1D")
+			return LayerType::Conv1D;
+		else if (str == "Conv2D")
+			return LayerType::Conv2D;
+		else if (str == "MaxPooling2D")
+			return LayerType::MaxPooling2D;
+		else if (str == "BatchNormalization")
+			return LayerType::BatchNormalization;
+		else
+			throw std::invalid_argument("Unsupported LayerType String: " + str);
+
+		return LayerType::Dense; // Default Fallback
+	}
+
 
 	void ModelLayout::ReadFromFile(const std::filesystem::path& filepath)
 	{
@@ -139,9 +197,11 @@ namespace TF
 
 		for (const auto& layer : mLayers)
 		{
+			const std::string layer_type = LayerTypeToString(layer.mType);
+
 			result["layers"].push_back(
 			{
-				{ "type", layer.mType },
+				{ "type", layer_type },
 				{ "params", layer.mParameters }
 			});
 		}

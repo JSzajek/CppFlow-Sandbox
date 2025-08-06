@@ -32,6 +32,20 @@ namespace TF
 		Image,
 	};
 
+	enum class LayerType
+	{
+		Add,
+		Multiply,
+		Dense,
+		Flatten,
+		Activation,
+		Dropout,
+		Conv1D,
+		Conv2D,
+		MaxPooling2D,
+		BatchNormalization
+	};
+
 	/// <summary>
 	/// Struct representing the input layer of a model.
 	/// </summary>
@@ -66,7 +80,7 @@ namespace TF
 	{
 	public:
 		// e.g., "Flatten", "Add", "Activation", Dense", "Dropout", "Conv2D", "MaxPooling2D", "BatchNormalization"
-		std::string mType;
+		LayerType mType;
 
 		// Generic parameters
 		std::unordered_map<std::string, nlohmann::json> mParameters;

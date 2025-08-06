@@ -1,6 +1,6 @@
-#include "TFImageLoader.h"
+#include "Data/TFImageLoader.h"
 
-#include <cppflow/cppflow.h>
+#include "CppFlowLib.h"
 #include <opencv2/opencv.hpp>
 
 namespace TF

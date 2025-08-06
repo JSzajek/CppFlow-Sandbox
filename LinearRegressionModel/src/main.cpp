@@ -14,7 +14,7 @@ int main()
 
 	model.AddOutput("y");
 
-	model.AddLayer("Dense",
+	model.AddLayer(TF::LayerType::Dense,
 	{
 		{ "input_name", "x" },
 		{ "units", 1 },
@@ -33,7 +33,7 @@ int main()
 	std::unordered_map<std::string, cppflow::tensor> inputs;
 	inputs["x"] = input_x;
 
-	TF::MLModel::Result results;
+	TF::MLModel::LabeledTensor results;
 	if (model.Run(inputs, results))
 	{
 		// Output the results -------------------------------------------------------------------------

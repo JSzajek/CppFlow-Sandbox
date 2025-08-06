@@ -26,15 +26,16 @@ def load_image_as_tensor(path, target_shape, dtype):
     img = tf.cast(img, dtype)
     return img
 
-def main(input_model, output_model, train_config_json, train_data_json):
+def main(model_path, input_version, output_version, train_config_json, train_data_json):
     # Load files --------------------------------------------------------------
-    layout = load_json(input_model + "/model_description.json")
+    layout = load_json(f"{model_path}/model_description.json")
     train_config = load_json(train_config_json)
     train_data = load_json(train_data_json)
 
 
     # --- Load Keras model ----------------------------------------------------
-    model = tf.keras.models.load_model(input_model)
+    input_model_path = f"{model_path}/Saved_{input_version}/"
+    model = tf.keras.models.load_model(input_model_path)
     # -------------------------------------------------------------------------
 
 
@@ -89,22 +90,24 @@ def main(input_model, output_model, train_config_json, train_data_json):
     # -------------------------------------------------------------------------
 
     # --- Save updated model --------------------------------------------------
-    model.save(output_model)
-    print(f"Model Retrained and Saved to {output_model}")
+    output_model_path = f"{model_path}/Saved_{output_version}/"
+    model.save(output_model_path)
+    print(f"Model Retrained and Saved to {output_model_path}")
     # -------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("Usage: python train_model.py <input_model> <output_model> <train_config.json> <train_data.json>")
+    if len(sys.argv) != 6:
+        print("Usage: python train_model.py <model_path> <input_version> <output_version> <train_config.json> <train_data.json>")
         sys.exit(-1)
 
-    input_model = sys.argv[1]
-    output_model = sys.argv[2]
-    train_config_json = sys.argv[3]
-    train_data_json = sys.argv[4]
+    model_path = sys.argv[1]
+    input_version = sys.argv[2]
+    output_version = sys.argv[3]
+    train_config_json = sys.argv[4]
+    train_data_json = sys.argv[5]
 
-    if (not os.path.exists(input_model + "/model_description.json")):
+    if (not os.path.exists(f"{model_path}/model_description.json")):
         print("Missing Model Description Json File.")
         sys.exit(-1)
 
-    main(input_model, output_model, train_config_json, train_data_json)
+    main(model_path, input_version, output_version, train_config_json, train_data_json)

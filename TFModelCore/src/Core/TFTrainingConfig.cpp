@@ -1,4 +1,4 @@
-#include "TFTrainingConfig.h"
+#include "Core/TFTrainingConfig.h"
 
 #include <fstream>
 

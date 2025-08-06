@@ -45,7 +45,7 @@ int main()
 			return false;
 		}
 
-		TF::MLModel::Result results;
+		TF::MLModel::LabeledTensor results;
 		if (model.Run(inputs, results))
 		{
 			// Output the results -------------------------------------------------------------------------

@@ -17,7 +17,7 @@ int main()
 
 	model.AddOutput("class_probs");
 
-	model.AddLayer("Conv1D",
+	model.AddLayer(TF::LayerType::Conv1D,
 	{
 		{ "input_name", "input" },
 		{ "filters", 32 },
@@ -25,7 +25,7 @@ int main()
 		{ "output_name", "conv1d_1" },
 	});
 
-	model.AddLayer("Conv2D",
+	model.AddLayer(TF::LayerType::Conv2D,
 	{
 		{ "input_name", "input" },
 		{ "filters", 64 },
@@ -33,7 +33,7 @@ int main()
 		{ "output_name", "conv2d_1" },
 	});
 
-	model.AddLayer("MaxPooling2D",
+	model.AddLayer(TF::LayerType::MaxPooling2D,
 	{
 		{ "input_name", "conv2d_1" },
 		{ "pool_size", {2, 2} },
@@ -42,13 +42,13 @@ int main()
 		{ "output_name", "pool1" },
 	});
 
-	model.AddLayer("Flatten",
+	model.AddLayer(TF::LayerType::Flatten,
 	{
 		{ "input_name", "pool1" },
 		{ "output_name", "flat_input" }
 	});
 
-	model.AddLayer("Dense",
+	model.AddLayer(TF::LayerType::Dense,
 	{
 		{ "input_name", "flat_input" },
 		{ "units", 6 },
@@ -90,7 +90,7 @@ int main()
 
 	// Output the Pre-Training Results
 	std::cout << "Pre-Training Output" << std::endl;
-	TF::MLModel::Result pre_results;
+	TF::MLModel::LabeledTensor pre_results;
 	if (model.Run(inputs, pre_results))
 	{
 		if (!pre_results.empty())
@@ -147,7 +147,7 @@ int main()
 	}
 
 	// Output the Post-Training Results
-	TF::MLModel::Result post_results;
+	TF::MLModel::LabeledTensor post_results;
 	if (model.Run(inputs, post_results))
 	{
 		if (!post_results.empty())

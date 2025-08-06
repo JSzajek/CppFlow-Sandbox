@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <mutex>
 
 namespace TF
 {
@@ -18,21 +19,28 @@ namespace TF
 	class MLModel
 	{
 	public:
-		using Result = std::unordered_map<std::string, cppflow::tensor>;
+		using LabeledTensor = std::unordered_map<std::string, cppflow::tensor>;
 	public:
 		/// <summary>
 		/// Constructor initializing a MLModel.
 		/// </summary>
-		/// <param name="modelpath">The model path</param>
-		MLModel(const std::filesystem::path& modelpath);
+		/// <param name="modelname">The model name</param>
+		/// <param name="output">The output path</param>
+		MLModel(const std::string& modelname,
+				const std::filesystem::path& output = "");
 	public:
 		/// <summary>
 		/// Loads Pre-Trained Models. Currently Only Supports loading ONNX or SavedModel format models.
 		/// 
 		/// Non-SavedModel formats will be converted to SavedModel format.
+		/// 
+		/// The model will be created/saved in-place unless an output is given.
 		/// </summary>
 		/// <param name="loadpath">The filepath to load from</param>
-		void LoadFrom(const std::filesystem::path& loadpath);
+		/// <param name="output">The output directory override</param>
+		/// <returns>True if the load was successful</returns>
+		bool LoadFrom(const std::filesystem::path& loadpath,
+					  const std::filesystem::path& output = "");
 
 		/// <summary>
 		/// Adds an input to the model.
@@ -57,7 +65,7 @@ namespace TF
 		/// </summary>
 		/// <param name="type">The type of the layer</param>
 		/// <param name="params">The parameters of the layer</param>
-		void AddLayer(const std::string& type, 
+		void AddLayer(LayerType type, 
 					  const std::unordered_map<std::string, nlohmann::json>& params);
 
 		/// <summary>
@@ -100,35 +108,11 @@ namespace TF
 		/// <param name="shuffle">Whether to shuffle the training</param>
 		/// <param name="validation_split">The validation split</param>
 		/// <returns>True if the training was successful</returns>
-		bool TrainModel(const std::string& output_path,
-						uint32_t epochs = 10,
-						uint32_t batchSize = 32,
-						float learning_rate = 0.001f,
-						bool shuffle = true,
-						float validation_split = 0.0f);
-
-		/// <summary>
-		/// Launches the training of the model.
-		/// </summary>
-		/// <param name="epochs">The number of epochs</param>
-		/// <param name="batchSize">The batch size</param>
-		/// <param name="learning_rate">The learning rate</param>
-		/// <param name="shuffle">Whether to shuffle the training</param>
-		/// <param name="validation_split">The validation split</param>
-		/// <returns>True if the training was successful</returns>
 		bool TrainModel(uint32_t epochs = 10,
 						uint32_t batchSize = 32,
 						float learning_rate = 0.001f,
 						bool shuffle = true,
-						float validation_split = 0.0f)
-		{
-			return TrainModel("", 
-							  epochs, 
-							  batchSize, 
-							  learning_rate, 
-							  shuffle, 
-							  validation_split);
-		}
+						float validation_split = 0.0f);
 
 		/// <summary>
 		/// Runs the model with the given input tensors and returns the output.
@@ -136,8 +120,8 @@ namespace TF
 		/// <param name="input_tensors">The input tensors</param>
 		/// <param name="output">The output result</param>
 		/// <returns>True if the running the model was successful</returns>
-		bool Run(const std::unordered_map<std::string, cppflow::tensor>& input_tensors,
-				 Result& output);
+		bool Run(const LabeledTensor& input_tensors,
+				 LabeledTensor& output);
 
 		/// <summary>
 		/// Exports all of the model's components to the specified directory.
@@ -153,12 +137,35 @@ namespace TF
 		/// <returns>True if conversion was successful</returns>
 		bool ConvertModelToSavedModel(const std::filesystem::path& filepath,
 									  const std::filesystem::path& outputpath);
+
+		/// <summary>
+		/// Retrieves the root directory for the model based on the output directory and model name.
+		/// </summary>
+		/// <returns>The model root directory</returns>
+		std::string GetModelRoot() const;
+
+		/// <summary>
+		/// Creates a model name based on the model number based on the input parameter.
+		/// If the version is -1, it will use the current model version.
+		/// </summary>
+		/// <param name="version">Version number override</param>
+		/// <returns>The version model name</returns>
+		std::string CreateModelName(int32_t version = -1) const;
 	public:
-		std::string mModelPath;
+		std::string mName;
+		std::atomic<uint32_t> mModelVersion = 0;
+
+		std::unique_ptr<cppflow::model> mpModel = nullptr;
+		std::mutex mModelMutex = {};
+
+		std::string mScriptDirectory;
+		std::string mOutputDirectory;
+
 
 		ModelLayout mLayout;
 
 		std::unordered_map<std::string, std::string> mInputToIONamesMap;
+		std::unordered_map<std::string, std::string> mOutputIONamesMap;
 		std::vector<std::string> mOutputIONames;
 
 		TrainingBatch mCurrentTrainingBatch;

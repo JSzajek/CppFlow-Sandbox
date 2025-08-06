@@ -20,13 +20,13 @@ int main()
 
 	model.AddOutput("class_probs");
 
-	model.AddLayer("Flatten",
+	model.AddLayer(TF::LayerType::Flatten,
 	{
 		{ "input_name", "input" },
 		{ "output_name", "flat_input" }
 	});
 
-	model.AddLayer("Dense",
+	model.AddLayer(TF::LayerType::Dense,
 	{
 		{ "input_name", "flat_input" },
 		{ "units", 64 },
@@ -34,7 +34,7 @@ int main()
 		{ "output_name", "dense_output1" },
 	});
 
-	model.AddLayer("Dense",
+	model.AddLayer(TF::LayerType::Dense,
 	{
 		{ "input_name", "dense_output1" },
 		{ "units", 3 },
@@ -65,7 +65,7 @@ int main()
 		return false;
 	}
 
-	TF::MLModel::Result results;
+	TF::MLModel::LabeledTensor results;
 	if (model.Run(inputs, results))
 	{
 		// Output the results -------------------------------------------------------------------------

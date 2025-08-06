@@ -53,6 +53,8 @@ namespace TF
 		// Fraction of data to reserve for validation
 		float validation_split = 0.0f;
 		
+
+
 		// TODO:: Implement these options
 		//std::string optimizer = "adam";     // Optimizer to use (e.g., "adam", "sgd")
 		//std::string loss_function = "mse";  // Loss function to use (e.g., "mse", "categorical_crossentropy")

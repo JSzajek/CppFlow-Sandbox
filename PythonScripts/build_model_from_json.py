@@ -82,21 +82,38 @@ def build_model(layout):
     return model
 
 
-def main(json_path):
-    with open(json_path, "r") as f:
+def main(output_path, version):
+    print(f"Creating Model Description At [{output_path}]...")
+    json_path = f"{output_path}/model_description.json"
+    with open(json_path, "r") as f:        
         layout = json.load(f)
 
-    model_name = layout["model_name"]
+    #model_name = layout["model_name"]
 
     model = build_model(layout)
+
+    print(f"Creating Model...")
     model.compile(optimizer='adam', loss='categorical_crossentropy')
-    model.save(model_name)
+    
+    saved_model_path = f"{output_path}/Saved_{version}/"
+
+    model.save(saved_model_path)
+    print(f"Saved Model to: {saved_model_path}")
 
     # Extract Signatures
-    io = extract_tensor_names(model_name)
-    with open(model_name + "/cppflow_io_names.json", "w") as f:
+    io = extract_tensor_names(saved_model_path)
+
+    ionames_path = f"{saved_model_path}/cppflow_io_names.json"
+    with open(ionames_path, "w") as f:
         json.dump(io, f, indent=2)
 
 if __name__ == "__main__":
-    json_path = sys.argv[1]
-    main(json_path)
+    arg_cnt = len(sys.argv)
+    if arg_cnt != 3:
+        print("Usage: python build_model_from_json.py <model_path> <version>")
+        sys.exit(-1)
+
+    output_path = sys.argv[1]
+    version = sys.argv[2]
+
+    main(output_path, version)

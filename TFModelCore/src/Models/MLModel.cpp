@@ -1,44 +1,82 @@
-#include "MLModel.h"
+#include "Models/MLModel.h"
+
+#include "Utils/ConsoleUtils.h"
+
 
 namespace TF
 {
-	MLModel::MLModel(const std::filesystem::path& modelpath)
-		: mModelPath(modelpath.string())
+	MLModel::MLModel(const std::string& modelname,
+					 const std::filesystem::path& output)
+		: mName(modelname),
+		mpModel(nullptr)
 	{
-		mLayout.mModelName = modelpath.stem().string();
+		mLayout.mModelName = modelname;
+
+		std::string output_dir = !output.empty() ? output.string() : "./";
+		if (std::filesystem::is_directory(output))
+		{
+			if (!std::filesystem::exists(output))
+				std::filesystem::create_directory(output);
+		}
+
+		mOutputDirectory = std::filesystem::canonical(output_dir).string();
+		mScriptDirectory = "../PythonScripts/";
 	}
 
-	void MLModel::LoadFrom(const std::filesystem::path& loadpath)
+	bool MLModel::LoadFrom(const std::filesystem::path& loadpath,
+						   const std::filesystem::path& output)
 	{
 		std::string output_path = loadpath.string();
-		mModelPath = loadpath.stem().string();
+		mName = loadpath.stem().string();
 
 		if (loadpath.has_extension() && loadpath.extension() == ".onnx")
 		{
-			output_path = (loadpath.parent_path() / loadpath.stem()).string();
-			mModelPath = output_path;
+			if (output.empty())
+			{
+				mOutputDirectory = std::filesystem::canonical(loadpath.parent_path()).string();
+			}
+			else
+			{
+				// Ensure output path exists
+				if (std::filesystem::is_directory(output))
+				{
+					if (!std::filesystem::exists(output))
+						std::filesystem::create_directory(output);
+				}
+				else
+				{
+					std::cerr << "Invalid Output Path: " << output << std::endl;
+					return false;
+				}
 
-			if (!ConvertModelToSavedModel(loadpath, "./" + output_path))
-				return;
+				mOutputDirectory = (std::filesystem::canonical(output)).string();
+			}
 
+			output_path = CreateModelName();
+
+			if (!ConvertModelToSavedModel(loadpath.string(), output_path))
+				return false;
 		}
 
+
+		const std::string model_path = CreateModelName();
 		if (!std::filesystem::exists(loadpath))
 		{
 			std::cerr << "Load Model Path Does Not Exist: " << loadpath << std::endl;
-			return;
+			return false;
 		}
 
 
 		std::stringstream cmd;
-		cmd << "python ../PythonScripts/extract_model_info.py"
+		cmd << "python \"" 
+			<< mScriptDirectory 
+			<< "/extract_model_info.py\""
 			<< " \"" << output_path << "\"";
 
-		int32_t exit_code = std::system(cmd.str().c_str());
-		if (exit_code != 0)
+		if (!ConsoleUtils::Execute(cmd.str().c_str()))
 		{
-			std::cerr << "Failed to Extract Info From SavedModel {" << output_path << "} Exit code: " << exit_code << std::endl;
-			return;
+			std::cerr << "Failed to Extract Info From SavedModel {" << output_path << "}" << std::endl;
+			return false;
 		}
 
 		// Load JSON with input/output tensor names
@@ -46,18 +84,28 @@ namespace TF
 		if (!in.is_open())
 		{
 			std::cerr << "Failed to open cppflow_io_names.json" << std::endl;
-			return;
+			return false;
 		}
 
 		nlohmann::json io_names;
 		in >> io_names;
 
 		for (auto& [key, val] : io_names["outputs"].items())
-			mOutputIONames.push_back(val.get<std::string>());
+		{
+			const std::string ioName = val.get<std::string>();
+			mOutputIONamesMap[ioName] = key;
+			mOutputIONames.push_back(ioName);
+		}
 
 		for (auto& [key, val] : io_names["inputs"].items())
 			mInputToIONamesMap[key] = val.get<std::string>();
 
+
+		{
+			const std::scoped_lock lock(mModelMutex);
+			mpModel = std::make_unique<cppflow::model>(model_path);
+		}
+		return true;
 	}
 
 	void MLModel::AddInput(const std::string& name,
@@ -82,7 +130,7 @@ namespace TF
 		});
 	}
 
-	void MLModel::AddLayer(const std::string& type, 
+	void MLModel::AddLayer(LayerType type,
 						   const std::unordered_map<std::string, nlohmann::json>& params)
 	{
 		mLayout.mLayers.push_back(
@@ -123,24 +171,35 @@ namespace TF
 	{
 		mOutputIONames.clear();
 
+		const std::string model_path_root = GetModelRoot();
+
 		// Write the layout to a file
-		const std::string model_description_path = "./" + mModelPath + "/model_description.json";
+		const std::string model_description_path = model_path_root + "/model_description.json";
 		mLayout.WriteToFile(model_description_path);
 
-
 		// Run the Python script to create the model
-		const std::string python_script = "python ../PythonScripts/build_model_from_json.py \"" + model_description_path + "\"";
+		std::stringstream python_script;
+		python_script << "python \"" 
+					  << mScriptDirectory 
+					  << "/build_model_from_json.py\"" 
+					  << " \"" << model_path_root << "\""
+					  << " \"0\"";
 
-		int32_t exit_code = std::system(python_script.c_str());
-		if (exit_code != 0)
+		std::string output;
+		if (!ConsoleUtils::Execute(python_script.str().c_str(), &output))
 		{
-			std::cerr << "Failed to Execute Model Creation Python script. Exit code: " << exit_code << std::endl;
+			std::cerr << "Failed Model Creation {" << mName << "}: \n\t" << output << std::endl;
 			return false;
 		}
 
+		mModelVersion = 0;
+
+		std::cout << output << std::endl;
 
 		// Load JSON with input/output tensor names
-		std::ifstream in(mModelPath + "/cppflow_io_names.json");
+		const std::string model_path = CreateModelName();
+		const std::string io_names_path = model_path + "/cppflow_io_names.json";
+		std::ifstream in(io_names_path);
 		if (!in.is_open())
 		{
 			std::cerr << "Failed to open cppflow_io_names.json" << std::endl;
@@ -151,16 +210,24 @@ namespace TF
 		in >> io_names;
 
 		for (auto& [key, val] : io_names["outputs"].items())
-			mOutputIONames.push_back(val.get<std::string>());
+		{
+			const std::string ioName = val.get<std::string>();
+			mOutputIONamesMap[ioName] = key;
+			mOutputIONames.push_back(ioName);
+		}
 
 		for (auto& [key, val] : io_names["inputs"].items())
 			mInputToIONamesMap[key] = val.get<std::string>();
 
+		{
+			const std::scoped_lock lock(mModelMutex);
+			mpModel = std::make_unique<cppflow::model>(model_path);
+		}
+
 		return true;
 	}
 
-	bool MLModel::TrainModel(const std::string& output_name, 
-							 uint32_t epochs,
+	bool MLModel::TrainModel(uint32_t epochs,
 							 uint32_t batchSize, 
 							 float learning_rate, 
 							 bool shuffle, 
@@ -171,39 +238,59 @@ namespace TF
 
 
 		TF::TrainingConfig config;
-		config.epochs = epochs;
-		config.batch_size = batchSize;
-		config.learning_rate = learning_rate;
-		config.shuffle = shuffle;
+		config.epochs			= epochs;
+		config.batch_size		= batchSize;
+		config.learning_rate	= learning_rate;
+		config.shuffle			= shuffle;
 		config.validation_split = validation_split;
 
-		config.WriteToFile("train/train_config.json");
+		const std::string model_path_root = GetModelRoot();
+		std::string training_config_path = model_path_root + "/train/train_config.json";
+		std::string training_data_path = model_path_root + "/train/train_data.json";
 
+		config.WriteToFile(training_config_path);
 
-		mCurrentTrainingBatch.WriteToFile("train/train_data.json");
-
-		std::string outputName = output_name.empty() ? mModelPath : output_name;
+		mCurrentTrainingBatch.WriteToFile(model_path_root + "/train/train_data.json");
 
 		std::stringstream trainCmd;
-		trainCmd << "python ../PythonScripts/train_model_from_json.py"
-				 << " \"" << mModelPath << "\""
-				 << " \"" << outputName << "\""
-				 << " \"train/train_config.json\""
-				 << " \"train/train_data.json\"";
+		trainCmd << "python \"" 
+				 << mScriptDirectory 
+				 << "/train_model_from_json.py\""
+				 << " \"" << model_path_root << "\""
+				 << " \"" << mModelVersion.load() << "\""
+				 << " \"" << mModelVersion.load() + 1 << "\""
+				 << " \"" << training_config_path << "\""
+				 << " \"" << training_data_path << "\"";
 
-		int32_t exit_code = std::system(trainCmd.str().c_str());
-		if (exit_code != 0)
+		std::string output;
+		if (!ConsoleUtils::Execute(trainCmd.str().c_str(), &output))
 		{
-			std::cerr << "Failed to Execute Training Python script. Exit code: " << exit_code << std::endl;
+			std::cerr << "Failed Execute Training On {" << mName << "}: \n\t" << output << std::endl;
 			return false;
 		}
+
+		std::cout << output << std::endl;
+
+		// Update Model
+		{
+			const std::scoped_lock lock(mModelMutex);
+			const std::string output_path = CreateModelName(++mModelVersion);
+			mpModel = std::make_unique<cppflow::model>(output_path);
+		}
+
 		return true;
 	}
 
-	bool MLModel::Run(const std::unordered_map<std::string, cppflow::tensor>& input_tensors,
-					  Result& output)
+	bool MLModel::Run(const LabeledTensor& input_tensors,
+					  LabeledTensor& output)
 	{
-		if (mOutputIONames.empty())
+		{
+			const std::scoped_lock lock(mModelMutex);
+			if (!mpModel)
+				return false;
+		}
+
+		if (mOutputIONamesMap.empty())
 			return false;
 
 		std::vector<std::tuple<std::string, cppflow::tensor>> inputs_vec;
@@ -219,13 +306,25 @@ namespace TF
 			inputs_vec.emplace_back(found->second, tensor);
 		}
 
-		cppflow::model model(mModelPath);
-		std::vector<cppflow::tensor> results = model(inputs_vec, mOutputIONames);
+		std::vector<cppflow::tensor> results;
+		{
+			const std::scoped_lock lock(mModelMutex);
+			results = std::move((*mpModel)(inputs_vec, mOutputIONames));
+		}
 
 		for (size_t i = 0; i < results.size(); ++i)
 		{
-			const auto& output_name = mOutputIONames[i];
-			output[output_name] = results[i];
+			const std::string& output_name = mOutputIONames[i];
+			auto found = mOutputIONamesMap.find(output_name);
+			if (found == mOutputIONamesMap.end())
+			{
+				std::cerr << "Output name '" << output_name << "' not found in model output names." << std::endl;
+				continue;
+			}
+			else
+			{
+				output[found->second] = results[i];
+			}
 		}
 		return true;
 	}
@@ -246,9 +345,11 @@ namespace TF
 										   const std::filesystem::path& outputpath)
 	{
 		std::stringstream cmd;
-		cmd << "python ../PythonScripts/convert_onnx_to_saved_model.py"
-				 << " \"" << filepath.string() << "\""
-				 << " \"" << outputpath.string() << "\"";
+		cmd << "python \"" 
+			<< mScriptDirectory 
+			<< "/convert_onnx_to_saved_model.py\""
+		    << " \"" << filepath.string() << "\""
+		    << " \"" << outputpath.string() << "\"";
 
 		int32_t exit_code = std::system(cmd.str().c_str());
 		if (exit_code != 0)
@@ -257,5 +358,22 @@ namespace TF
 			return false;
 		}
 		return true;	
+	}
+
+	std::string MLModel::GetModelRoot() const
+	{
+		return mOutputDirectory + "/" + mName;
+	}
+
+	std::string MLModel::CreateModelName(int32_t version) const
+	{
+		if(version < 0)
+		{
+			return mOutputDirectory + "/" + mName + "/Saved_" + std::to_string(mModelVersion.load());
+		}
+		else
+		{
+			return mOutputDirectory + "/" + mName + "/Saved_" + std::to_string(version);
+		}
 	}
 }

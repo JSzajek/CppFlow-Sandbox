@@ -1,5 +1,5 @@
 # **CppFlow Sandbox**
-A lightweight and extensible C++/Python hybrid library for training, generating, converting, and deploying TensorFlow models using `cppflow`, OpenCV, and Python with `Tensorflow`.
+A lightweight C++/Python hybrid library for training, generating, converting, and deploying TensorFlow models using `cppflow`, OpenCV, and Python with `Tensorflow`.
 
 ## **Getting Started**
 
@@ -16,7 +16,7 @@ Ensure you have the following installed on your system:
 
 
 ### Supported Model Formats
-- SavedModel TensforFlow
+- SavedModel (TensforFlow)
 - ONNX
 
 ### **How to Build**
@@ -70,7 +70,7 @@ model.AddInput("y",
 
 model.AddOutput("add_result");
 
-model.AddLayer("Add",
+model.AddLayer(TF::LayerType::Add,
 {
 	{ "input_names", { "x", "y" } },
 	{ "output_name", "add_result" }

@@ -18,7 +18,7 @@ int main()
 
 	model.AddOutput("add_result");
 
-	model.AddLayer("Add",
+	model.AddLayer(TF::LayerType::Add,
 	{
 		{ "input_names", { "x", "y" } },
 		{ "output_name", "add_result" }
@@ -38,7 +38,7 @@ int main()
 	inputs["x"] = input_x;
 	inputs["y"] = input_y;
 
-	TF::MLModel::Result results;
+	TF::MLModel::LabeledTensor results;
 	if (model.Run(inputs, results))
 	{
 		// Output the results -------------------------------------------------------------------------

@@ -14,20 +14,20 @@ int main()
 
 	model.AddOutput("y");
 
-	model.AddLayer("Flatten",
+	model.AddLayer(TF::LayerType::Flatten,
 	{
 		{ "input_name", "x" },
 		{ "output_name", "flat_input" }
 	});
 
-	model.AddLayer("Dense",
+	model.AddLayer(TF::LayerType::Dense,
 	{
 		{ "input_name", "flat_input" },
 		{ "units", 16 },
 		{ "output_name", "dense_1" },
 	});
 
-	model.AddLayer("Dense",
+	model.AddLayer(TF::LayerType::Dense,
 	{
 		{ "input_name", "dense_1" },
 		{ "units", 2 },
@@ -52,7 +52,7 @@ int main()
 
 	// Output the Pre-Training Results
 	std::cout << "Pre-Training Output" << std::endl;
-	TF::MLModel::Result pre_results;
+	TF::MLModel::LabeledTensor pre_results;
 	if (model.Run(inputs, pre_results))
 	{
 		if (!pre_results.empty())
@@ -94,7 +94,7 @@ int main()
 	}
 
 	// Output the Post-Training Results
-	TF::MLModel::Result post_results;
+	TF::MLModel::LabeledTensor post_results;
 	if (model.Run(inputs, post_results))
 	{
 		if (!post_results.empty())
